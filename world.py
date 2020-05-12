@@ -2,7 +2,8 @@ import pygame
 import sys, os, random
 import constants
 from reactiveAgent import reactiveAgent
-import worldObjects
+from worldObjects import Delivery, Obstacle
+
 
 class World:
     def __init__(self):
@@ -16,20 +17,38 @@ class World:
         self.display_surface = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
         self.display_surface.fill(constants.LIGHTBLUE)
 
-
         self.map = self.readMap(constants.MAPFILE)
         self.steps = pygame.time.get_ticks()
         self.cells = Cells(self.map, self.display_surface)
+
         self.walls = Walls(self.map, self.display_surface)
         self.buildings = Buildings(self.map, self.display_surface)
 
         self.agent = reactiveAgent(self.map, self.display_surface)
 
+        self.deliveries = Delivery(self.buildings, self.display_surface)
+
+        for i in range(len(self.deliveries.deliveries)-1):
+            pos = self.deliveries.__getitem__(i).__dict__.get('pos')
+            self.buildings.updateDel(pos)
+
+        self.obstacles = Obstacle(self.cells, self.display_surface)
+        for i in range(len(self.obstacles.obstacles)):
+            rand = self.obstacles.__getitem__(i).__dict__.get('rand')
+            pos = self.obstacles.__getitem__(i).__dict__.get('pos')
+            x = self.obstacles.__getitem__(i).__dict__.get('x')
+            y = self.obstacles.__getitem__(i).__dict__.get('y')
+
+            self.cells.updateCell(rand)
+
+
+
         self.drawGrid()
 
+    #depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
     def agentMove(self):
         if random.random() <= 0.8:
-            self.agent.move(walls=self.walls, buildings=self.buildings)
+            self.agent.move(walls=self.walls, buildings=self.buildings, deliveries=self.deliveries, cells=self.cells)
         else:
             self.agent.rotate()
 
@@ -44,8 +63,6 @@ class World:
                         sys.exit()
                 if event.key == pygame.K_SPACE:
                     self.start = not self.start
-
-
 
     def readMap(self, mapfile):
         with open(mapfile, 'r') as f:
@@ -72,10 +89,12 @@ class World:
 
 
 class Cell(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, pos, x, y, obs):
         super().__init__()
+        self.pos = pos
         self.x = x
         self.y = y
+        self.obstacle = obs
         filepath = os.path.join("data\img\cell.png")
         self.image = pygame.image.load(filepath).convert_alpha()
         self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
@@ -88,11 +107,14 @@ class Cells:
         super().__init__()
         self.cells = []
         self.map = world_map
+        self.surface = surface
 
+        pos = 0
         for col, tiles in enumerate(world_map):
             for row, tile in enumerate(tiles):
                 if tile == '.' or tile == 'a':
-                    c = Cell(row, col)
+                    pos+=1
+                    c = Cell(pos, row, col, obs=False)
                     #c = type('obj', (object,), {'x': row, 'y': col})
                     self.cells.append(c)
                     myrect = pygame.Rect(row*constants.BLOCK_WIDTH, col*constants.BLOCK_HEIGHT, constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
@@ -102,6 +124,29 @@ class Cells:
     def __getitem__(self, item):
         return self.cells[item]
 
+    def updateCell(self, rand):
+        pos = self.__getitem__(rand).__dict__.get('pos')
+        x = self.__getitem__(rand).__dict__.get('x')
+        y = self.__getitem__(rand).__dict__.get('y')
+
+        filepath = os.path.join("data\img\obs.png")
+        self.image = pygame.image.load(filepath).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(x * constants.BLOCK_WIDTH, y * constants.BLOCK_HEIGHT)
+
+        setattr(self.cells[rand], 'obstacle', not self.cells[rand].__dict__.get('obstacle'))
+        setattr(self.cells[rand], 'image', self.image)
+
+    def getPos(self, x, y, cells):
+        for i in range(len(cells.cells)-1):
+            current = cells.__getitem__(i).__dict__
+            if current.get('x') == x and current.get('y') == y:
+                return current.get('pos')
+                break
+            else:
+                pass
+        return 0
 
 class Walls:
     def __init__(self, world_map, surface):
@@ -129,10 +174,12 @@ class Buildings:
         self.buildings = []
         self.map = world_map
 
+        pos = 0
         for col, tiles in enumerate(world_map):
             for row, tile in enumerate(tiles):
                 if tile == 'b':
-                    b = type('obj', (object,), {'x': row, 'y': col})
+                    b = type('obj', (object,), {'pos': pos, 'x': row, 'y': col, 'delivery': False})
+                    pos+=1
                     self.buildings.append(b)
                     myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
                                          constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
@@ -142,4 +189,16 @@ class Buildings:
     def __getitem__(self, item):
         return self.buildings[item]
 
+    def getPos(self, x, y, buildings):
+        for i in range(len(buildings.buildings)):
+            current = buildings.__getitem__(i).__dict__
+            if current.get('x') == x and current.get('y') == y:
+                return current.get('pos')
+                break
+            else:
+                pass
+        return 0
+
+    def updateDel(self, pos):
+        setattr(self.buildings[pos], 'delivery', not self.__getitem__(pos).__dict__.get('delivery'))
 

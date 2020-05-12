@@ -2,6 +2,7 @@ import pygame
 import sys, os, random
 import constants
 
+
 class reactiveAgent(pygame.sprite.Sprite):
     def __init__(self, world_map, surface):
         super().__init__()
@@ -9,7 +10,7 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.y = -1
         self.map = world_map
         self.direction = constants.DOWN
-        self.rot = 0 #point down
+        self.rot = 0  # point down
 
         for col, tiles in enumerate(self.map):
             for row, tile in enumerate(tiles):
@@ -24,52 +25,74 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(self.x * constants.BLOCK_WIDTH, self.y * constants.BLOCK_HEIGHT)
 
-    def move(self, dx=0, dy=0, walls=None, buildings=None):
-        print(self.direction)
-        if self.direction == constants.DOWN:
+
+    #------------------------#
+    #        ACTUATORS       #
+    #------------------------#
+    def move(self, dx=0, dy=0, walls=None, buildings=None, deliveries=None, cells=None):
+        #print(self.direction)
+        if self.direction == constants.ROT[0]:
             dy = 1
-        elif self.direction == constants.UP:
+        elif self.direction == constants.ROT[1]:
             dy = -1
-        elif self.direction == constants.LEFT:
+        elif self.direction == constants.ROT[2]:
             dx = 1
-        elif self.direction == constants.RIGHT:
+        elif self.direction == constants.ROT[3]:
             dx = -1
 
-        if not self.isWall(dx, dy, walls) and not self.isBuilding(dx, dy, buildings):
+        #if not a wall or building, keep moving
+        #self.hasObstacle(dx, dy, cells)
+        if not self.isWall(dx, dy, walls) and not self.isBuilding(dx, dy, buildings) and not self.hasObstacle(dx, dy, cells):
             self.x += dx
             self.y += dy
             self.rect = self.rect.move(dx * constants.BLOCK_WIDTH, dy * constants.BLOCK_HEIGHT)
             print("Player has moved. x,y: {},{}. dx={}, dy={}".format(self.x, self.y, dx, dy))
 
-        else:
+        #if its a building will check for delivery
+        elif self.isBuilding(dx, dy, buildings):
+            b_keys = buildings.__dict__.keys()
+            pos = buildings.getPos(self.x+dx, self.y+dy, buildings)
+
+            #cgeck for delivery
+            if(self.hasDelivery(pos, buildings)):
+                print("has delivery")
+            else:
+                #print("no delivery")
+                pass
+
+        #rotate otherwise
+        elif self.hasObstacle(dx, dy, cells):
+            print("desvia")
             self.rotate()
-        #if self.isWall(dx, dy, walls) or self.isBuilding(dx, dy, buildings):
-        #    self.rotate()
 
     def rotate(self):
         new_rot = random.randint(0, 3)
-        print("rand: ", new_rot)
         rot_angle = 0
-        print("current direction: ", self.direction)
         if self.direction == constants.ROT[0] and new_rot == 1 or self.direction == constants.ROT[1] and new_rot == 0 or \
                 self.direction == constants.ROT[2] and new_rot == 3 or self.direction == constants.ROT[3] and new_rot == 2:
             rot_angle = 180
             self.direction = constants.ROT[new_rot]
-            print("new direction: ", self.direction)
         elif self.direction == constants.ROT[0] and new_rot == 2 or self.direction == constants.ROT[1] and new_rot == 3 or \
-                self.direction == constants.ROT[2] and new_rot == 1 or self.direction == constants.ROT[3] and new_rot == 1:
+                self.direction == constants.ROT[2] and new_rot == 1 or self.direction == constants.ROT[3] and new_rot == 0:
             rot_angle = 90
             self.direction = constants.ROT[new_rot]
-            print("new direction: ", self.direction)
         elif self.direction == constants.ROT[0] and new_rot == 3 or self.direction == constants.ROT[1] and new_rot == 2 or \
-            self.direction == constants.ROT[2] and new_rot == 0 or self.direction == constants.ROT[3] and new_rot == 0:
+            self.direction == constants.ROT[2] and new_rot == 0  or self.direction == constants.ROT[3] and new_rot == 1:
             rot_angle = -90
             self.direction = constants.ROT[new_rot]
-            print("new direction: ", self.direction)
 
         self.image = pygame.transform.rotate(self.image, rot_angle)
 
-        print("rotate")
+    def pickUpDelivery(self):
+        pass
+
+    def dropDelivery(self):
+        pass
+
+
+    #------------------------#
+    #         SENSORS        #
+    #------------------------#
 
     def isWall(self, dx=0, dy=0, walls=None):
         for wall in walls:
@@ -82,3 +105,23 @@ class reactiveAgent(pygame.sprite.Sprite):
             if b.x == self.x + dx and b.y == self.y + dy:
                 return True
         return False
+
+    def hasDelivery(self, pos, buildings):
+        current = buildings.__getitem__(pos)
+        keys = current.__dict__
+        if keys.get('delivery') == True:
+            print("has delivery")
+            return True
+        else:
+            return False
+
+    def hasObstacle(self, dx, dy, cells):
+        pos = cells.getPos(self.x, self.y, cells)
+        current = cells.__getitem__(pos)
+        keys = current.__dict__
+        #print(keys)
+        if keys.get('obstacle') == True:
+            print("obstacle ahead")
+            return True
+        else:
+            return False
