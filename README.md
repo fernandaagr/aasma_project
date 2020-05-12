@@ -10,4 +10,4 @@ Based on [this tutorial](https://github.com/poly451/Tutorials/tree/master/Python
 
 space key to make the agent move\stop.
 
-agent rotation not working.
+
