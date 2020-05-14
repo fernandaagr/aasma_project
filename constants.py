@@ -1,3 +1,4 @@
+import os
 SCREEN_WIDTH = 480
 SCREEN_HEIGHT = 480
 
@@ -26,5 +27,5 @@ ROT = {0: DOWN, 1: UP, 2: LEFT, 3: RIGHT}
 
 
 #MAPFILE = "map.txt"
-MAPFILE = "data\maps\map_delivery.txt"
+MAPFILE = os.path.join("data","maps","map_delivery.txt")
 TITLE = "Welcome to Tile World!"
