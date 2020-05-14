@@ -19,7 +19,7 @@ class reactiveAgent(pygame.sprite.Sprite):
                     self.y = col
                     print("player at: row: {}, col: {}".format(row, col))
             # ---------------------------------------------
-        filepath = os.path.join("data\img\dog02.png")
+        filepath = os.path.join("data", "img", "dog02.png")
         self.image = pygame.image.load(filepath).convert_alpha()
         self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
         self.rect = self.image.get_rect()

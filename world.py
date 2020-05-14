@@ -10,17 +10,19 @@ class World:
 
         self.start = False
         self.paused = False
-        #init
+        #---------- Init Interface ----------#
         pygame.init()
         pygame.display.set_caption("Delivery World")
         self.all_sprites = pygame.sprite.Group()
         self.display_surface = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
         self.display_surface.fill(constants.LIGHTBLUE)
 
-        self.map = self.readMap(constants.MAPFILE)
-        self.steps = pygame.time.get_ticks()
-        self.cells = Cells(self.map, self.display_surface)
 
+        self.map = self.readMap(constants.MAPFILE)
+        #self.steps = pygame.time.get_ticks()
+
+
+        self.cells = Cells(self.map, self.display_surface)
         self.walls = Walls(self.map, self.display_surface)
         self.buildings = Buildings(self.map, self.display_surface)
 
@@ -54,14 +56,14 @@ class World:
 
     def handleEvents(self):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:           #press ESC to quit the program
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         sys.exit()
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE:     #SPACE to start/stop agent
                     self.start = not self.start
 
     def readMap(self, mapfile):
@@ -95,7 +97,7 @@ class Cell(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.obstacle = obs
-        filepath = os.path.join("data\img\cell.png")
+        filepath = os.path.join("data","img","cell.png")
         self.image = pygame.image.load(filepath).convert_alpha()
         self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
         self.rect = self.image.get_rect()
@@ -129,7 +131,7 @@ class Cells:
         x = self.__getitem__(rand).__dict__.get('x')
         y = self.__getitem__(rand).__dict__.get('y')
 
-        filepath = os.path.join("data\img\obs.png")
+        filepath = os.path.join("data", "img", "obs.png")
         self.image = pygame.image.load(filepath).convert_alpha()
         self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
         self.rect = self.image.get_rect()
