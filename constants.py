@@ -27,5 +27,10 @@ ROT = {0: DOWN, 1: UP, 2: LEFT, 3: RIGHT}
 
 
 #MAPFILE = "map.txt"
-MAPFILE = os.path.join("data","maps","map_delivery.txt")
+MP1 = os.path.join("data","maps","map_delivery.txt")
+MP2 = os.path.join("data","maps","map_delivery2.txt")
+MP3 = os.path.join("data","maps","map_delivery3.txt")
+
+MAPS = {0: MP1, 1: MP2, 2: MP3}
+MAPFILE = os.path.join("data","maps","map_delivery2.txt")
 TITLE = "Welcome to Tile World!"

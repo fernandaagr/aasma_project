@@ -3,7 +3,7 @@ import sys, os, random
 import constants
 import world
 
-class Delivery():
+class Deliveries:
     def __init__(self, buildings, surface):
         self.buildings = buildings
         self.surface = surface
@@ -35,14 +35,42 @@ class Delivery():
     def __getitem__(self, item):
         return self.deliveries[item]
 
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, cells, surface):
-        self.surface = surface
-        self.cells = cells
-        self.obstacles = []
 
-        for i in range(0, 3):
-            self.generate()
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+        filepath = os.path.join("data", "img", "obs.png")
+        self.image = pygame.image.load(filepath).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(self.x * constants.BLOCK_WIDTH, self.y * constants.BLOCK_HEIGHT)
+
+#class Obstacle(pygame.sprite.Sprite):
+class Obstacles:
+    #def __init__(self, cells, surface):
+    def __init__(self, world_map, surface):
+        self.surface = surface
+        #self.cells = cells
+        self.obstacles = []
+        self.map = world_map
+
+        #----------------- Static obstacles -----------------#
+        for col, tiles in enumerate(self.map):
+            for row, tile in enumerate(tiles):
+                if tile == 'o':
+                    #o = type('obj', (object,), {'x': row, 'y': col})
+                    o = Obstacle(row, col)
+                    self.obstacles.append(o)
+
+                    myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
+                                         constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
+                    pygame.draw.rect(surface, constants.SILVER, myrect)
+
+        #---------------------------------------------------#
+        #for i in range(0, 3):
+        #    self.generate()
 
     def generate(self):
         c = random.randint(0, len(self.cells.cells)-1)

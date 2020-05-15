@@ -9,9 +9,10 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.x = -1
         self.y = -1
         self.map = world_map
-        self.direction = constants.DOWN
+        self.direction = constants.ROT[0]
         self.rot = 0  # point down
 
+        #Check .txt for agents. They will always start at the same place (company headquarters) -----> isso vai mudar quando aumentar o número de agents
         for col, tiles in enumerate(self.map):
             for row, tile in enumerate(tiles):
                 if tile == 'a':
@@ -25,12 +26,25 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(self.x * constants.BLOCK_WIDTH, self.y * constants.BLOCK_HEIGHT)
 
+    # ------------------------#
+    #      AGENT DECISION     #
+    # ------------------------#
+    #Decisão do agent deve ser mais ou menos assim.
+    def agentDecision(self, dx=0, dy=0, pos=0, walls=None, buildings=None, deliveries=None, cells=None, obstacles=None):
+        if self.isWall(dx, dy, walls) or self.hasObstacle(dx, dy, obstacles):
+            self.rotate()
+        elif self.isBuilding(dx, dy, buildings) and not self.hasDelivery(pos, buildings):
+            self.rotate()
+        elif self.isBuilding(dx, dy, buildings) and self.hasDelivery(pos, buildings):
+            self.pickUpDelivery()
+        else:
+            self.move()
 
     #------------------------#
     #        ACTUATORS       #
     #------------------------#
-    def move(self, dx=0, dy=0, walls=None, buildings=None, deliveries=None, cells=None):
-        #print(self.direction)
+    def move(self, dx=0, dy=0, walls=None, buildings=None, deliveries=None, cells=None, obstacles=None):
+        #Deal with agents direction/orientation
         if self.direction == constants.ROT[0]:
             dy = 1
         elif self.direction == constants.ROT[1]:
@@ -40,9 +54,9 @@ class reactiveAgent(pygame.sprite.Sprite):
         elif self.direction == constants.ROT[3]:
             dx = -1
 
-        #if not a wall or building, keep moving
-        #self.hasObstacle(dx, dy, cells)
-        if not self.isWall(dx, dy, walls) and not self.isBuilding(dx, dy, buildings) and not self.hasObstacle(dx, dy, cells):
+        #------------- mudar isto para ser parte de agent decision -----------------------#
+        #if not a wall or building, keeps moving
+        if not self.isWall(dx, dy, walls) and not self.isBuilding(dx, dy, buildings) and not self.hasObstacle(dx, dy, obstacles):
             self.x += dx
             self.y += dy
             self.rect = self.rect.move(dx * constants.BLOCK_WIDTH, dy * constants.BLOCK_HEIGHT)
@@ -51,22 +65,21 @@ class reactiveAgent(pygame.sprite.Sprite):
         #if its a building will check for delivery
         elif self.isBuilding(dx, dy, buildings):
             b_keys = buildings.__dict__.keys()
-            pos = buildings.getPos(self.x+dx, self.y+dy, buildings)
+            pos = buildings.getPos(self.x+dx, self.y+dy, buildings) #get the position of the building to check  if it has a delivery
 
-            #cgeck for delivery
-            if(self.hasDelivery(pos, buildings)):
+            #check for delivery
+            if self.hasDelivery(pos, buildings):
                 print("has delivery")
             else:
-                #print("no delivery")
                 pass
 
         #rotate otherwise
-        elif self.hasObstacle(dx, dy, cells):
+        elif self.hasObstacle(dx, dy, obstacles):
             print("desvia")
             self.rotate()
 
     def rotate(self):
-        new_rot = random.randint(0, 3)
+        new_rot = random.randint(0, 3)#used to rotate to a random direction everytime
         rot_angle = 0
         if self.direction == constants.ROT[0] and new_rot == 1 or self.direction == constants.ROT[1] and new_rot == 0 or \
                 self.direction == constants.ROT[2] and new_rot == 3 or self.direction == constants.ROT[3] and new_rot == 2:
@@ -115,13 +128,20 @@ class reactiveAgent(pygame.sprite.Sprite):
         else:
             return False
 
-    def hasObstacle(self, dx, dy, cells):
-        pos = cells.getPos(self.x, self.y, cells)
-        current = cells.__getitem__(pos)
-        keys = current.__dict__
-        #print(keys)
-        if keys.get('obstacle') == True:
-            print("obstacle ahead")
-            return True
-        else:
-            return False
+    def hasObstacle(self, dx=0, dy=0, obstacles=None):
+        for b in obstacles:
+            if b.x == self.x + dx and b.y == self.y + dy:
+                print("obstacle ahead")
+                return True
+        return False
+
+    #def hasObstacle(self, dx, dy, cells):
+    #    pos = cells.getPos(self.x, self.y, cells)
+    #    current = cells.__getitem__(pos)
+    #    keys = current.__dict__
+    #    # print(keys)
+    #    if keys.get('obstacle') == True:
+    #        print("obstacle ahead")
+    #        return True
+    #    else:
+    #        return False

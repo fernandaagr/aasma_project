@@ -2,10 +2,13 @@ import pygame
 import sys, os, random
 import constants
 from reactiveAgent import reactiveAgent
-from worldObjects import Delivery, Obstacle
+from worldObjects import Deliveries, Obstacles
 
 
 class World:
+    """
+    Init world.
+    """
     def __init__(self):
 
         self.start = False
@@ -17,44 +20,60 @@ class World:
         self.display_surface = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
         self.display_surface.fill(constants.LIGHTBLUE)
 
-
+        #self.map = self.readMap(constants.MAPS[random.randint(0, 2)])
         self.map = self.readMap(constants.MAPFILE)
         #self.steps = pygame.time.get_ticks()
 
-
+        #---------- Init world and objects ----------#
+        #cells, walls, buildings, obstacles and agents position come from map_delivery.txt
         self.cells = Cells(self.map, self.display_surface)
         self.walls = Walls(self.map, self.display_surface)
         self.buildings = Buildings(self.map, self.display_surface)
 
         self.agent = reactiveAgent(self.map, self.display_surface)
 
-        self.deliveries = Delivery(self.buildings, self.display_surface)
+        self.deliveries = Deliveries(self.buildings, self.display_surface)
 
+        #update color of building that has delivery
         for i in range(len(self.deliveries.deliveries)-1):
             pos = self.deliveries.__getitem__(i).__dict__.get('pos')
             self.buildings.updateDel(pos)
 
-        self.obstacles = Obstacle(self.cells, self.display_surface)
-        for i in range(len(self.obstacles.obstacles)):
-            rand = self.obstacles.__getitem__(i).__dict__.get('rand')
-            pos = self.obstacles.__getitem__(i).__dict__.get('pos')
-            x = self.obstacles.__getitem__(i).__dict__.get('x')
-            y = self.obstacles.__getitem__(i).__dict__.get('y')
+        #create static obstacles
+        self.obstacles = Obstacles(self.map, self.display_surface)
 
-            self.cells.updateCell(rand)
+        #----------- create obstacles randomly ---------------------#
+        #self.obstacles = Obstacle(self.cells, self.display_surface)
+        #for i in range(len(self.obstacles.obstacles)):
+        #    rand = self.obstacles.__getitem__(i).__dict__.get('rand')
+        #    pos = self.obstacles.__getitem__(i).__dict__.get('pos')
+        #    x = self.obstacles.__getitem__(i).__dict__.get('x')
+        #    y = self.obstacles.__getitem__(i).__dict__.get('y')
 
-
+        #    self.cells.updateCell(rand)
+        # -----------------------------------------------------------#
 
         self.drawGrid()
 
     #depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
     def agentMove(self):
+        """
+        Agent movement on game loop.
+        Based on a random prop will rotate even if does not colide with anything.
+
+        ->agentDecision() deve vir aqui<-
+
+        :parameters -> used in agents sensors
+        """
         if random.random() <= 0.8:
-            self.agent.move(walls=self.walls, buildings=self.buildings, deliveries=self.deliveries, cells=self.cells)
+            self.agent.move(walls=self.walls, buildings=self.buildings, deliveries=self.deliveries, cells=self.cells, obstacles=self.obstacles)
         else:
             self.agent.rotate()
 
     def handleEvents(self):
+        """
+        Handle events when press keys.
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:           #press ESC to quit the program
                 pygame.quit()
@@ -67,12 +86,20 @@ class World:
                     self.start = not self.start
 
     def readMap(self, mapfile):
+        """
+        Read .txt file with map.
+        :param mapfile: path to file
+        :return:
+        """
         with open(mapfile, 'r') as f:
             world_map = f.readlines()
         world_map = [line.strip() for line in world_map]
         return world_map
 
     def drawGrid(self):
+        """
+        Draw grid to better see movement. FIX.
+        """
         for i in range(constants.NUMBER_OF_BLOCKS_WIDE):
             new_height = round(i * constants.BLOCK_HEIGHT)
             new_width = round(i * constants.BLOCK_WIDTH)
@@ -80,8 +107,15 @@ class World:
             pygame.draw.line(self.display_surface, constants.LIGHTGREY, (new_width, 0), (new_width, constants.SCREEN_HEIGHT), 2)
 
     def updateClasses(self):
+        """
+        Update sprites of interface.
+        """
         for elem in self.cells:
             self.all_sprites.add(elem)
+
+        for elem in self.obstacles:
+            self.all_sprites.add(elem)
+
         self.all_sprites.add(self.agent)
 
     def drawAgents(self):
@@ -91,6 +125,10 @@ class World:
 
 
 class Cell(pygame.sprite.Sprite):
+    """
+    Cell and Cells set cells based on .txt with map.
+    Use sprite to reset "view" every time agents cross a cell
+    """
     def __init__(self, pos, x, y, obs):
         super().__init__()
         self.pos = pos
@@ -127,6 +165,10 @@ class Cells:
         return self.cells[item]
 
     def updateCell(self, rand):
+        """
+        Needed to update view of cell with obstacle (if generted randomly)
+        :param rand: random pos to obstacle (rand is the pos on the list of objects of type cell, not on the map)
+        """
         pos = self.__getitem__(rand).__dict__.get('pos')
         x = self.__getitem__(rand).__dict__.get('x')
         y = self.__getitem__(rand).__dict__.get('y')
@@ -140,17 +182,10 @@ class Cells:
         setattr(self.cells[rand], 'obstacle', not self.cells[rand].__dict__.get('obstacle'))
         setattr(self.cells[rand], 'image', self.image)
 
-    def getPos(self, x, y, cells):
-        for i in range(len(cells.cells)-1):
-            current = cells.__getitem__(i).__dict__
-            if current.get('x') == x and current.get('y') == y:
-                return current.get('pos')
-                break
-            else:
-                pass
-        return 0
-
 class Walls:
+    """
+    Set walls based on .txt with map. Always the same.
+    """
     def __init__(self, world_map, surface):
         super().__init__()
         self.walls = []
@@ -171,6 +206,9 @@ class Walls:
 
 
 class Buildings:
+    """
+        Set buildings based on .txt with map.
+        """
     def __init__(self, world_map, surface):
         super().__init__()
         self.buildings = []
@@ -192,6 +230,9 @@ class Buildings:
         return self.buildings[item]
 
     def getPos(self, x, y, buildings):
+        """
+        Get pos of the building given coordinates.
+        """
         for i in range(len(buildings.buildings)):
             current = buildings.__getitem__(i).__dict__
             if current.get('x') == x and current.get('y') == y:
@@ -202,5 +243,10 @@ class Buildings:
         return 0
 
     def updateDel(self, pos):
+        """
+        Update building cell if its has delivery. Just change the color for now.
+        :param pos: pos of delivery (in which building)
+        :return:
+        """
         setattr(self.buildings[pos], 'delivery', not self.__getitem__(pos).__dict__.get('delivery'))
 
