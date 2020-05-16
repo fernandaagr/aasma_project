@@ -30,14 +30,23 @@ class World:
         self.walls = Walls(self.map, self.display_surface)
         self.buildings = Buildings(self.map, self.display_surface)
 
-        self.agent = reactiveAgent(self.map, self.display_surface)
 
-        self.deliveries = Deliveries(self.buildings, self.display_surface)
-
+        #self.deliveries = Deliveries(self.buildings, self.display_surface)
+        self.deliveries = []
         #update color of building that has delivery
-        for i in range(len(self.deliveries.deliveries)-1):
-            pos = self.deliveries.__getitem__(i).__dict__.get('pos')
-            self.buildings.updateDel(pos)
+        #for i in range(len(self.deliveries.deliveries)-1):
+        #    pos = self.deliveries.__getitem__(i).__dict__.get('pos')
+        #    self.buildings.updateDel(pos)
+
+        for i in range(0, 4):
+            print("{})".format(i))
+            d=Deliveries(self.buildings, self.display_surface)
+            setattr(d.__dict__.get('deliveries')[0], 'id_delivery', i)
+
+            self.deliveries.append(d)
+
+            pos = d.__dict__.get('deliveries')[0].__dict__.get('pos')
+            self.buildings.updateDel(pos, i)
 
         #create static obstacles
         self.obstacles = Obstacles(self.map, self.display_surface)
@@ -53,10 +62,13 @@ class World:
         #    self.cells.updateCell(rand)
         # -----------------------------------------------------------#
 
+        self.agent = reactiveAgent(self.map, self.display_surface, self.walls, self.buildings, self.obstacles, self.deliveries)
+
+        print("Agent: ", self.agent.__dict__)
         self.drawGrid()
 
-    #depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
-    def agentMove(self):
+    # depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
+    def reactiveAgentDecision(self):
         """
         Agent movement on game loop.
         Based on a random prop will rotate even if does not colide with anything.
@@ -65,8 +77,9 @@ class World:
 
         :parameters -> used in agents sensors
         """
-        if random.random() <= 0.8:
-            self.agent.move(walls=self.walls, buildings=self.buildings, deliveries=self.deliveries, cells=self.cells, obstacles=self.obstacles)
+        r = random.random()
+        if r <= 0.8:
+            self.agent.agentDecision()
         else:
             self.agent.rotate()
 
@@ -75,14 +88,14 @@ class World:
         Handle events when press keys.
         """
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:           #press ESC to quit the program
+            if event.type == pygame.QUIT:           # press ESC to quit the program
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        sys.exit()
-                if event.key == pygame.K_SPACE:     #SPACE to start/stop agent
+                    pygame.quit()
+                    sys.exit()
+                if event.key == pygame.K_SPACE:     # SPACE to start/stop agent
                     self.start = not self.start
 
     def readMap(self, mapfile):
@@ -113,14 +126,13 @@ class World:
         for elem in self.cells:
             self.all_sprites.add(elem)
 
-        for elem in self.obstacles:
-            self.all_sprites.add(elem)
+        #for elem in self.obstacles:
+        #    self.all_sprites.add(elem)
 
         self.all_sprites.add(self.agent)
 
     def drawAgents(self):
         self.all_sprites.update()
-        #self.display_surface.fill((0,0,0))
         self.all_sprites.draw(self.display_surface)
 
 
@@ -135,7 +147,7 @@ class Cell(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.obstacle = obs
-        filepath = os.path.join("data","img","cell.png")
+        filepath = os.path.join("data", "img", "cell.png")
         self.image = pygame.image.load(filepath).convert_alpha()
         self.image = pygame.transform.scale(self.image, (constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT))
         self.rect = self.image.get_rect()
@@ -229,6 +241,9 @@ class Buildings:
     def __getitem__(self, item):
         return self.buildings[item]
 
+    def getbuildings(self):
+        return self.buildings
+
     def getPos(self, x, y, buildings):
         """
         Get pos of the building given coordinates.
@@ -242,11 +257,12 @@ class Buildings:
                 pass
         return 0
 
-    def updateDel(self, pos):
+    def updateDel(self, pos, id_delivery):
         """
         Update building cell if its has delivery. Just change the color for now.
         :param pos: pos of delivery (in which building)
         :return:
         """
         setattr(self.buildings[pos], 'delivery', not self.__getitem__(pos).__dict__.get('delivery'))
+        setattr(self.buildings[pos], 'id_delivery', id_delivery)
 

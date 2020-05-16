@@ -1,7 +1,7 @@
 import pygame
 import sys, os, random
 import constants
-import world
+
 
 class Deliveries:
     def __init__(self, buildings, surface):
@@ -9,28 +9,32 @@ class Deliveries:
         self.surface = surface
         self.deliveries = []
 
-        d = random.randint(0, len(self.buildings.buildings) - 1)
-        d_keys = self.buildings.__getitem__(d).__dict__
-        if d_keys.get('delivery') == True:
-            print("has delivery already")
-            self.generate()
+
+        self.generate()
+
+    def generateRand(self):
+        pp, dp = random.sample(range(0, len(self.buildings.buildings) - 1), 2)
+        pp_keys = self.buildings.__getitem__(pp).__dict__
+        if pp_keys.get('delivery') == True:
+            pp, dp = self.generateRand()
+            return pp, dp
         else:
-            for i in range(0, 4):
-                self.generate()
+            return pp, dp
 
     def generate(self):
-        d = random.randint(0, len(self.buildings.buildings) - 1)
-        d_keys = self.buildings.__getitem__(d).__dict__
-        if d_keys.get('delivery') == True:
-            print("has delivery already")
-            self.generate()
-        else:
-            print("new delivery at x: {}, y: {}".format(d_keys.get('x'), d_keys.get('y')))
-            d = type('obj', (object,), {'pos': d, 'x': d_keys.get('x'), 'y': d_keys.get('y')})
-            self.deliveries.append(d)
-            myrect = pygame.Rect(d_keys.get('x') * constants.BLOCK_WIDTH, d_keys.get('y') * constants.BLOCK_HEIGHT,
-                                 constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
-            pygame.draw.rect(self.surface, constants.LIGHTSALMON, myrect)
+        pp, dp = self.generateRand()
+        pp_keys = self.buildings.__getitem__(pp).__dict__
+        dp_keys = self.buildings.__getitem__(dp).__dict__
+        print("new delivery at x: {}, y: {}, pos={}.".format(pp_keys.get('x'), pp_keys.get('y'), pp))
+        print("Drop point: x:{}, y:{}, pos={}".format(dp_keys.get('x'), dp_keys.get('y'), dp_keys.get('pos')))
+
+        d = type('obj', (object,), {'pos': pp, 'x': pp_keys.get('x'), 'y': pp_keys.get('y'),
+                                    'dp_pos': dp_keys.get('pos'), 'dp_x': dp_keys.get('x'), 'dp_y': dp_keys.get('y')})
+        self.deliveries.append(d)
+        myrect = pygame.Rect(pp_keys.get('x') * constants.BLOCK_WIDTH, pp_keys.get('y') * constants.BLOCK_HEIGHT,
+                             constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
+        pygame.draw.rect(self.surface, constants.LIGHTSALMON, myrect)
+
 
     def __getitem__(self, item):
         return self.deliveries[item]
@@ -60,13 +64,13 @@ class Obstacles:
         for col, tiles in enumerate(self.map):
             for row, tile in enumerate(tiles):
                 if tile == 'o':
-                    #o = type('obj', (object,), {'x': row, 'y': col})
-                    o = Obstacle(row, col)
+                    o = type('obj', (object,), {'x': row, 'y': col})
+                    #o = Obstacle(row, col)
                     self.obstacles.append(o)
 
                     myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
                                          constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
-                    pygame.draw.rect(surface, constants.SILVER, myrect)
+                    pygame.draw.rect(surface, constants.MAROON, myrect)
 
         #---------------------------------------------------#
         #for i in range(0, 3):
