@@ -1,7 +1,7 @@
 import pygame
 import sys, os, random
 import constants
-
+import world
 
 class Deliveries:
     def __init__(self, buildings, surface):
@@ -15,7 +15,7 @@ class Deliveries:
     def generateRand(self):
         pp, dp = random.sample(range(0, len(self.buildings.buildings) - 1), 2)
         pp_keys = self.buildings.__getitem__(pp).__dict__
-        if pp_keys.get('delivery') == True:
+        if pp_keys.get('delivery'):
             pp, dp = self.generateRand()
             return pp, dp
         else:
@@ -30,6 +30,7 @@ class Deliveries:
 
         d = type('obj', (object,), {'pos': pp, 'x': pp_keys.get('x'), 'y': pp_keys.get('y'),
                                     'dp_pos': dp_keys.get('pos'), 'dp_x': dp_keys.get('x'), 'dp_y': dp_keys.get('y')})
+        #print(d.__dict__)
         self.deliveries.append(d)
         myrect = pygame.Rect(pp_keys.get('x') * constants.BLOCK_WIDTH, pp_keys.get('y') * constants.BLOCK_HEIGHT,
                              constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
@@ -67,7 +68,8 @@ class Obstacles:
                     o = type('obj', (object,), {'x': row, 'y': col})
                     #o = Obstacle(row, col)
                     self.obstacles.append(o)
-
+                    #print(world.World.updateEntity(row, col, 'cell'))
+                    world.World.updateEntity(world.World, row, col, 'obs', True)
                     myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
                                          constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
                     pygame.draw.rect(surface, constants.MAROON, myrect)

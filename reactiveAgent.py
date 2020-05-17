@@ -4,35 +4,34 @@ import constants
 import world
 
 class reactiveAgent(pygame.sprite.Sprite):
-    def __init__(self, world_map, surface, walls, buildings, obstacles, deliveries):
+
+
+    def __init__(self, pos, x, y, surface):
         super().__init__()
-        self.x = -1
-        self.y = -1
-        self.map = world_map
-        self.direction = constants.ROT[0]
-        self.rot = 0  # point down
-        self.battery = 100
-
-        #
-        self.walls = walls
-        self.buildings = buildings
-        self.obstacles = obstacles
-        self.deliveries = deliveries
-
+        self.x = x
+        self.y = y
+        self.pos = pos
         self.dx = 0
         self.dy = 0
 
-        #print("Teste: ", world.Buildings.getbuildings(self).__dict__.get('buildings'))
-        #t = world.Buildings.getbuildings(self).__dict__.get('buildings')
+        self.direction = constants.ROT[0]
+        self.rot = 0  # point down
+        self.surface = surface
 
+        self.battery = 100
+        self.hasCargo = False
+        self.idDelivery = None
+
+        print("player at: row: {}, col: {}".format(self.x, self.y))
+        print("Agent: hasCargo={}, idDelivery={}".format(self.hasCargo, self.idDelivery))
 
         #Check .txt for agents. They will always start at the same place (company headquarters) -----> isso vai mudar quando aumentar o número de agents
-        for col, tiles in enumerate(self.map):
-            for row, tile in enumerate(tiles):
-                if tile == 'a':
-                    self.x = row
-                    self.y = col
-                    print("player at: row: {}, col: {}".format(row, col))
+        #for col, tiles in enumerate(self.map):
+        #    for row, tile in enumerate(tiles):
+        #        if tile == 'a':
+        #            self.x = row
+        #            self.y = col
+        #            print("player at: row: {}, col: {}".format(row, col))
             # ---------------------------------------------
         filepath = os.path.join("data", "img", "dog02.png")
         self.image = pygame.image.load(filepath).convert_alpha()
@@ -48,9 +47,11 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.aheadPosition()
         if not self.isWall() and not self.isBuilding() and not self.hasObstacle():
             self.move()
-        elif self.isBuilding() and self.hasDelivery():
+        elif self.isBuilding() and self.hasDelivery() and not self.agentHasDelivery():
             self.pickUpDelivery()
-        elif self.hasObstacle() or self.isBuilding():
+        elif self.isBuilding() and self.agentHasDelivery() and self.isDeliveryPoint():
+            self.dropDelivery()
+        elif self.isWall() or self.hasObstacle() or self.isBuilding():
             self.rotate()
 
     def aheadPosition(self):
@@ -96,21 +97,35 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.image, rot_angle)
 
     def pickUpDelivery(self):
-        print("pickup delivery")
-        pos = self.buildings.getPos(self.x+self.dx, self.y+self.dy, self.buildings)         # get pos of building in front of agent
-        keys = self.buildings.__getitem__(pos).__dict__                                     # still from building
-        id = keys.get('id_delivery')                                                        # get id of delivery that this building has
-        delivery = self.deliveries.__getitem__(id).__dict__.get('deliveries')[0].__dict__   # get delivery -> to messy change it later
-        #delivery = d.get('deliveries')[0].__dict__
-        print("agent as delivery: {}. Pp: {}, Dp:{}".format(delivery.get('id_delivery'), delivery.get('pos'), delivery.get('dp_pos')))
+        # new
+        entity = world.World.getEntity(world.World, (self.x + self.dx), (self.y + self.dy)).__dict__ # get entity in front of agent
+        id = entity.get('info')                 # get id of delivery that this entity has. if it has a delivery, the 'info' attribute has its id.
+        deli = world.deliveries[id].__dict__    # get delivery - for now, the pos and id are the same
 
-        #update agent
-        #update building (remove delivery from it)
+        print("agent as delivery: {}. Pp: ({}, {}), Dp:({}, {})".format(deli.get('id'), deli.get('x'), deli.get('y'),
+                                                            deli.get('dp_x'), deli.get('dp_y')))
 
-        pass
+        self.updateAgent(deli.get('id'))    # update agent, so it knows it has a cargo and the id
+        world.World.updateDelivery(world.World, deli.get('id'), 'agent', 'A1')  # update delivery, so it knows which agents is delivering
+        world.World.updateBuilding(world.World, deli.get('x'), deli.get('y'))   # update building (remove delivery from it) -> set to false in objects, dont remove from deliveries list
+
+        # change color of building -> didnt work in world.py
+        myrect = pygame.Rect(deli.get('x') * constants.BLOCK_WIDTH, deli.get('y') * constants.BLOCK_HEIGHT,
+                             constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
+        pygame.draw.rect(self.surface, constants.DARKSLATEGRAY, myrect)
 
     def dropDelivery(self):
-        pass
+        print("drop delivery")
+        # update delivery
+        world.World.updateDelivery(world.World,self.idDelivery, 'finished', 'True')  # update delivery, so it knows which agents is delivering
+        # update agent
+        self.updateAgent()
+
+    def updateAgent(self, idDelivery=None):
+        self.hasCargo = not self.hasCargo
+        self.idDelivery = idDelivery
+
+        print("Agent updated: hasCargo={}, idDelivery={}".format(self.hasCargo, self.idDelivery))
 
 
     #------------------------#
@@ -118,45 +133,38 @@ class reactiveAgent(pygame.sprite.Sprite):
     #------------------------#
 
     def isWall(self):
-        for wall in self.walls:
-            if wall.x == self.x + self.dx and wall.y == self.y + self.dy:
-                return True
-        return False
+        return world.World.getEntity(world.World, (self.x + self.dx),
+                                     (self.y + self.dy)).__dict__.get('type') == 'wall'
 
     def isBuilding(self):
-        for b in self.buildings:
-            if b.x == self.x + self.dx and b.y == self.y + self.dy:
-                return True
-        return False
+        return world.World.getEntity(world.World, (self.x + self.dx),
+                                     (self.y + self.dy)).__dict__.get('type') == 'building'
 
     def hasDelivery(self):
-        pos = self.buildings.getPos(self.x + self.dx, self.y + self.dy, self.buildings)  # get the position of the building to check  if it has a delivery
-        current = self.buildings.__getitem__(pos)
-        keys = current.__dict__
-        if keys.get('delivery') == True:
-            print("has delivery")
+        entity = world.World.getEntity(world.World, (self.x + self.dx), (self.y + self.dy)).__dict__
+        if entity.get('delivery'):
+            print('has delivery')
             return True
         else:
             return False
 
     def hasObstacle(self):
-        for b in self.obstacles:
-            if b.x == self.x + self.dx and b.y == self.y + self.dy:
-                print("obstacle ahead, rotate")
-                return True
-        return False
+        entity = world.World.getEntity(world.World, (self.x + self.dx), (self.y + self.dy)).__dict__
+        if entity.get('type') == 'cell' and entity.get('obs'):
+            print("obstacle")
+            return True
+        else:
+            return False
+        # return entityType == 'cell' and hasObs
 
     def agentHasDelivery(self):
-        return False
+        return self.hasCargo
+
+    def isDeliveryPoint(self):
+        entity = world.deliveries[self.idDelivery].__dict__
+        if self.x+self.dx == entity.get('dp_x') and self.y+self.dy == entity.get('dp_y'):
+            return True
+        else:
+            return False
 
 
-    #def hasObstacle(self, dx, dy, cells):
-    #    pos = cells.getPos(self.x, self.y, cells)
-    #    current = cells.__getitem__(pos)
-    #    keys = current.__dict__
-    #    # print(keys)
-    #    if keys.get('obstacle') == True:
-    #        print("obstacle ahead")
-    #        return True
-    #    else:
-    #        return False

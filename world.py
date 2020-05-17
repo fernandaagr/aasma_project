@@ -3,14 +3,17 @@ import sys, os, random
 import constants
 from reactiveAgent import reactiveAgent
 from worldObjects import Deliveries, Obstacles
+import Entity
+import numpy as np
 
-
+objects = np.empty([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=object)
+deliveries = []
+pos = 0
 class World:
     """
     Init world.
     """
     def __init__(self):
-
         self.start = False
         self.paused = False
         #---------- Init Interface ----------#
@@ -22,7 +25,6 @@ class World:
 
         #self.map = self.readMap(constants.MAPS[random.randint(0, 2)])
         self.map = self.readMap(constants.MAPFILE)
-        #self.steps = pygame.time.get_ticks()
 
         #---------- Init world and objects ----------#
         #cells, walls, buildings, obstacles and agents position come from map_delivery.txt
@@ -30,26 +32,32 @@ class World:
         self.walls = Walls(self.map, self.display_surface)
         self.buildings = Buildings(self.map, self.display_surface)
 
-
-        #self.deliveries = Deliveries(self.buildings, self.display_surface)
         self.deliveries = []
-        #update color of building that has delivery
-        #for i in range(len(self.deliveries.deliveries)-1):
-        #    pos = self.deliveries.__getitem__(i).__dict__.get('pos')
-        #    self.buildings.updateDel(pos)
-
         for i in range(0, 4):
             print("{})".format(i))
-            d=Deliveries(self.buildings, self.display_surface)
-            setattr(d.__dict__.get('deliveries')[0], 'id_delivery', i)
+            d = Deliveries(self.buildings, self.display_surface)    # get new delivery
+            setattr(d.__dict__.get('deliveries')[0], 'id_delivery', i) # add id to it
+            #self.deliveries.append(d)
+            #p = d.__dict__.get('deliveries')[0].__dict__.get('pos')
+            #self.buildings.updateDel(p, i)
 
-            self.deliveries.append(d)
+            # get delivery keys and values
+            delivery = d.__dict__.get('deliveries')[0].__dict__
+            x = delivery.get('x')
+            y = delivery.get('y')
 
-            pos = d.__dict__.get('deliveries')[0].__dict__.get('pos')
-            self.buildings.updateDel(pos, i)
+            # update buildings with delivery and id of delivery
+            self.updateEntity(x, y, 'delivery', True)
+            self.updateEntity(x, y, 'info', delivery.get('id_delivery'))
+
+            # auxiliar list with deliveries
+            dd = type('obj', (object,), {'x': x, 'y': y, 'dp_x': delivery.get('dp_x'), 'dp_y': delivery.get('dp_y'),
+                                         'id': delivery.get('id_delivery'), 'finished': False, 'agent': None})
+            deliveries.append(dd)
+
 
         #create static obstacles
-        self.obstacles = Obstacles(self.map, self.display_surface)
+        #self.obstacles = Obstacles(self.map, self.display_surface)
 
         #----------- create obstacles randomly ---------------------#
         #self.obstacles = Obstacle(self.cells, self.display_surface)
@@ -62,10 +70,30 @@ class World:
         #    self.cells.updateCell(rand)
         # -----------------------------------------------------------#
 
-        self.agent = reactiveAgent(self.map, self.display_surface, self.walls, self.buildings, self.obstacles, self.deliveries)
-
+        self.agent = reactiveAgent(0, 1, 1, self.display_surface)
         print("Agent: ", self.agent.__dict__)
+
         self.drawGrid()
+
+    def getEntity(self, x, y):
+        return objects[x][y];
+
+    def updateEntity(self, x, y, attr, value):
+        print("updated entity")
+        setattr(objects[x][y], attr, value)
+
+    def updateDelivery(self, p, attr, value):
+        print("updated delivery")
+        setattr(deliveries[p], attr, value)
+        print(deliveries[p].__dict__)
+
+    def updateBuilding(self, x, y):
+        print("update building")
+        setattr(objects[x][y], 'delivery', not objects[x][y].__dict__.get('delivery'))
+        # myrect = pygame.Rect(x * constants.BLOCK_WIDTH, y * constants.BLOCK_HEIGHT,
+        #                     constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
+        # pygame.draw.rect(self.display_surface, constants.DARKSLATEGRAY, myrect)
+
 
     # depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
     def reactiveAgentDecision(self):
@@ -135,6 +163,9 @@ class World:
         self.all_sprites.update()
         self.all_sprites.draw(self.display_surface)
 
+    def getbuildings(self):
+        return self.buildings
+
 
 class Cell(pygame.sprite.Sprite):
     """
@@ -160,18 +191,39 @@ class Cells:
         self.cells = []
         self.map = world_map
         self.surface = surface
-
-        pos = 0
+        self.agents = []
+        self.obstacles = []
+        posCell = 0
         for col, tiles in enumerate(world_map):
             for row, tile in enumerate(tiles):
                 if tile == '.' or tile == 'a':
+                    posCell+=1
+                    global pos
                     pos+=1
-                    c = Cell(pos, row, col, obs=False)
+                    c = Cell(posCell, row, col, obs=False)
                     #c = type('obj', (object,), {'x': row, 'y': col})
                     self.cells.append(c)
+
+                    e = Entity.Entity(pos, row, col, 'cell', False, False, '')
+                    #objects.append(e)
+                    objects[row][col] = e
                     myrect = pygame.Rect(row*constants.BLOCK_WIDTH, col*constants.BLOCK_HEIGHT, constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
                     pygame.draw.rect(surface, constants.SILVER, myrect)
                     #print("row: {}, col: {}".format(row, col))
+
+                if tile == 'o':
+                    o = type('obj', (object,), {'x': row, 'y': col})
+                    #o = Obstacle(row, col)
+                    self.obstacles.append(o)
+
+                    e = Entity.Entity(pos, row, col, 'cell', True, False, '')
+                    # objects.append(e)
+                    objects[row][col] = e
+                    #print(world.World.updateEntity(row, col, 'cell'))
+                    #world.World.updateEntity(world.World, row, col, 'obs', True)
+                    myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
+                                         constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
+                    pygame.draw.rect(surface, constants.MAROON, myrect)
 
     def __getitem__(self, item):
         return self.cells[item]
@@ -208,6 +260,10 @@ class Walls:
                 if tile == 'w':
                     w = type('obj', (object,), {'x': row, 'y': col})
                     self.walls.append(w)
+
+                    e = Entity.Entity(None, row, col, 'wall', False, False, '')
+                    # objects.append(e)
+                    objects[row][col] = e
                     myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
                                          constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
                     pygame.draw.rect(surface, constants.BLACK, myrect)
@@ -215,7 +271,6 @@ class Walls:
 
     def __getitem__(self, item):
         return self.walls[item]
-
 
 class Buildings:
     """
@@ -226,13 +281,19 @@ class Buildings:
         self.buildings = []
         self.map = world_map
 
-        pos = 0
+        posBuil = 0
         for col, tiles in enumerate(world_map):
             for row, tile in enumerate(tiles):
                 if tile == 'b':
-                    b = type('obj', (object,), {'pos': pos, 'x': row, 'y': col, 'delivery': False})
-                    pos+=1
+                    b = type('obj', (object,), {'pos': posBuil, 'x': row, 'y': col, 'delivery': False})
+                    posBuil+=1
+                    global pos
+                    pos += 1
                     self.buildings.append(b)
+
+                    e = Entity.Entity(pos, row, col, 'building', False, False, '')
+                    #objects.append(e)
+                    objects[row][col] = e
                     myrect = pygame.Rect(row * constants.BLOCK_WIDTH, col * constants.BLOCK_HEIGHT,
                                          constants.BLOCK_WIDTH, constants.BLOCK_HEIGHT)
                     pygame.draw.rect(surface, constants.DARKSLATEGRAY, myrect)
@@ -241,8 +302,6 @@ class Buildings:
     def __getitem__(self, item):
         return self.buildings[item]
 
-    def getbuildings(self):
-        return self.buildings
 
     def getPos(self, x, y, buildings):
         """
@@ -257,12 +316,13 @@ class Buildings:
                 pass
         return 0
 
-    def updateDel(self, pos, id_delivery):
+    def updateDel(self, p, id_delivery):
         """
         Update building cell if its has delivery. Just change the color for now.
         :param pos: pos of delivery (in which building)
         :return:
         """
-        setattr(self.buildings[pos], 'delivery', not self.__getitem__(pos).__dict__.get('delivery'))
-        setattr(self.buildings[pos], 'id_delivery', id_delivery)
+        setattr(self.buildings[p], 'delivery', not self.__getitem__(p).__dict__.get('delivery'))
+        setattr(self.buildings[p], 'id_delivery', id_delivery)
+
 
