@@ -10,15 +10,18 @@ def main():
     while True:
         clock = pygame.time.Clock()     # Setup the clock for a decent framerate
         pygame.display.flip()           # Flip everything to the display
-        clock.tick(5)                   # Ensure program maintains a rate of n frames per second
+        clock.tick(8)                   # Ensure program maintains a rate of n frames per second
 
         myWorld.handleEvents()
         myWorld.drawAgents()
         pygame.display.update()
+        myWorld.othersUpdates()
 
-        if myWorld.start == True:
-            myWorld.agentMove()
-
+        if myWorld.start:
+            if myWorld.paused:
+                pass
+            elif not myWorld.paused:
+                myWorld.reactiveAgentDecision()
 
 if __name__ == "__main__":
     main()
