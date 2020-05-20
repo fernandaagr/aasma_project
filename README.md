@@ -56,12 +56,12 @@ And detect if there is (Sensors):
  * 
 
 ### ToDos:
-* uma função para verificar o ultimo movimento/rotate e se a posição se manteve a mesma, para o agente não ficar muito tempo "preso" na mesma posição muito tempo
+* (?) uma função para verificar o ultimo movimento/rotate e se a posição se manteve a mesma, para o agente não ficar muito tempo "preso" na mesma posição muito tempo
 * isAgentInFront; -> tinha esquecido
 * tempo minimo para realizar deliveries disponíveis (?), se acabar antes gerar mais deliveries;
 * ver time de execução. já tem o update do paused time.
 * comunicação agent/company, company/agent;
-* moveTo/sendTo: função que recebe as coordenadas de cada step do agent, quando ele tiver q voltar pra company pra recarregar ou enviar agent para outra coordenada especifica;
+* (?) moveTo/sendTo: função que recebe as coordenadas de cada step do agent, quando ele tiver q voltar pra company pra recarregar ou enviar agent para outra coordenada especifica;
 
 Based on [this tutorial](https://github.com/poly451/Tutorials/tree/master/Python:%20Create%20a%20Grid) to create what we have so far. Also, using sprit she uses for the agent.
 
