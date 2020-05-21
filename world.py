@@ -7,6 +7,7 @@ import utils
 
 
 objects = np.empty([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=object)
+agents = np.zeros([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=bool)
 deliveries = []
 tic = 0
 pausedTime = 0
@@ -98,6 +99,20 @@ class World:
         :param value: new value
         """
         setattr(objects[x][y], attr, value)
+
+    def cellHasAgent(self, x, y):
+        """
+        Return agent given coordinates.
+        """
+        return agents[x][y];
+
+    def updateAgentLocation(self, x, y, value):
+        """
+        Update specif world object.
+        :param x: and :param y: coordinated of the agent in the matrix.
+        :param value: new value
+        """
+        agents[x][y] = value
 
     def updateDelivery(self, p, attr, value):
         """

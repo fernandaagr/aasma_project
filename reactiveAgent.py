@@ -33,6 +33,8 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.count = 100  # equilave a 10 iterações ~=1.4189 segundos --> to recharge
         # self.count = 100  # equilave a 100 iterações ~=10 * 1.4189 segundos
 
+        world.World.updateAgentLocation(world.World,self.x,self.y,True)
+
         print("-> {} at: row: {}, col: {}".format(self.name, self.x, self.y))
         print("-> {}: hasCargo={}, idDelivery={}".format(self.name, self.hasCargo, self.idDelivery))
 
@@ -45,21 +47,22 @@ class reactiveAgent(pygame.sprite.Sprite):
     #Decisão do agent deve ser mais ou menos assim.
     def agentDecision(self):
         self.aheadPosition()
-        #if self.isLowBattery():
-        #    print("low battery")
-        #    self.stopAgent()
+        if self.isLowBattery():
+            print("low battery")
+            self.stopAgent()
             # communicate with company to know what to do;
-        if self.isHeadQuarters() and not self.prepared and self.battery <= 50:
-            print("headquarters to charge")
-            self.prepareRecharge()
+        elif self.isAgentInFront():
+                print("Stoped!Agent in front.")
+                self.stopAgent()
+        elif self.isHeadQuarters() and not self.prepared and self.battery <= 75:
+                print("headquarters to charge")
+                self.prepareRecharge()
         elif self.prepared and self.checkTimeIteration():
             print("-> {} ready to charge.".format(self.name))
             self.recharge()
-        elif self.hasObstacle() and self.getBattery() >= 50:
-            self.move()
-            self.battery-=self.battery
         elif not self.pause and not self.isWall() and not self.isBuilding() and not self.hasObstacle():
             self.move()
+            self.battery = self.battery-1
         elif self.isBuilding() and self.hasDelivery() and not self.agentHasDelivery():
             self.pickUpDelivery()
         elif self.isBuilding() and self.agentHasDelivery() and self.isDeliveryPoint():
@@ -84,11 +87,13 @@ class reactiveAgent(pygame.sprite.Sprite):
     #        ACTUATORS       #
     #------------------------#
     def move(self):
+        world.World.updateAgentLocation(world.World,self.x,self.y,False)
         self.x += self.dx
         self.y += self.dy
+        world.World.updateAgentLocation(world.World,self.x,self.y,True)
         self.rect = self.rect.move(self.dx * constants.BLOCK_WIDTH, self.dy * constants.BLOCK_HEIGHT)
         self.battery -= 1
-        print("Player has moved. x,y: {},{}. dx={}, dy={}, battery={}".format(self.x, self.y, self.dx, self.dy, self.battery))
+        print("{} has moved. x,y: {},{}. dx={}, dy={}, battery={}".format(self.name,self.x, self.y, self.dx, self.dy, self.battery))
 
     def rotate(self):
         new_rot = random.randint(0, 3)#used to rotate to a random direction everytime
@@ -153,7 +158,7 @@ class reactiveAgent(pygame.sprite.Sprite):
     def stopAgent(self):
         self.rot = 0
         self.rect = self.rect.move(0 * constants.BLOCK_WIDTH, 0 * constants.BLOCK_HEIGHT)
-        print("Agent stoped. Battery level: {}".format(self.battery))
+        print("{} stoped. Battery level: {}".format(self.name,self.battery))
         self.pause = not self.pause
 
     def prepareRecharge(self):
@@ -221,7 +226,10 @@ class reactiveAgent(pygame.sprite.Sprite):
             return False
 
     def isLowBattery(self):
-        return self.battery <= 25
+        return self.battery == 0
+
+    def isAgentInFront(self):
+        return world.World.cellHasAgent(world.World, (self.x + self.dx), (self.y + self.dy))
 
     def isHeadQuarters(self):
         entity = world.World.getWorldObject(world.World, (self.x + self.dx), (self.y + self.dy)).__dict__
