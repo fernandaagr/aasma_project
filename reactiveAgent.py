@@ -62,7 +62,6 @@ class reactiveAgent(pygame.sprite.Sprite):
             self.recharge()
         elif not self.pause and not self.isWall() and not self.isBuilding() and not self.hasObstacle():
             self.move()
-            self.battery = self.battery-1
         elif self.isBuilding() and self.hasDelivery() and not self.agentHasDelivery():
             self.pickUpDelivery()
         elif self.isBuilding() and self.agentHasDelivery() and self.isDeliveryPoint():
@@ -92,7 +91,7 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.y += self.dy
         world.World.updateAgentLocation(world.World,self.x,self.y,True)
         self.rect = self.rect.move(self.dx * constants.BLOCK_WIDTH, self.dy * constants.BLOCK_HEIGHT)
-        self.battery -= 1
+        self.battery = self.battery -1 
         print("{} has moved. x,y: {},{}. dx={}, dy={}, battery={}".format(self.name,self.x, self.y, self.dx, self.dy, self.battery))
 
     def rotate(self):
