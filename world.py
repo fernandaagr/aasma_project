@@ -4,13 +4,13 @@ import numpy as np
 from reactiveAgent import reactiveAgent
 import constants, Cells, Walls, Buildings, Deliveries
 import utils
-
+from datetime import datetime
 
 objects = np.empty([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=object)
 agents = np.zeros([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=bool)
 deliveries = []
 tic = 0
-pausedTime = 0
+pauses = []
 
 
 class World:
@@ -39,16 +39,18 @@ class World:
         self.pTime = 0
         self.lastP = 0
         self.first = True
-        self.start = 0
+        self.startT = 0
         self.stop = 0
         self.numDeliveries = 0
         self.finalTime = 0
+        self.pauses = []
+        self.numPauses = 0
         # --------------------------------------------------- #
         # colocar um timer para gerar as deliveries
         self.deliveries = []
         print(" ---------- Deliveries ---------- ")
 
-        self.generateNDeliveries(6)
+        self.generateNDeliveries(1)
 
         print(" ------------------------------ ")
         print("num deliveries: ", self.numDeliveries)
@@ -59,25 +61,8 @@ class World:
 
         self.drawGrid()
 
-    def getFinalTime(self):
-        """
-        Get final time of execution. Paused time not included.
-        :return: finalTime
-        """
-        return self.finalTime
 
-    def checkEnd(self):
-        """
-        Not used yet. And doesnt work.
-        :return:
-        """
-        if self.numDeliveries <= 0:
-            self.stop = time.perf_counter()
-            self.finalTime = self.stop - self.pTime - self.start
 
-            return True
-        else:
-            return False
 
     # ----------------------------- #
     # ----- Auxiliary Methods ----- #
@@ -85,6 +70,7 @@ class World:
     """
         Methods to help access/manipulate matrix with world objects
     """
+
     def getWorldObject(self, x, y):
         """
         Return world object given coordinates.
@@ -139,6 +125,41 @@ class World:
                 setattr(self.buildings.__getitem__(d.__dict__.get('pos')), 'delivery',
                         not self.buildings.__getitem__(d.__dict__.get('pos')).__dict__.get('delivery'))
 
+                self.numDeliveries-=1
+
+    def getFinalTime(self):
+        """
+        Get final time of execution. Paused time not included.
+        :return: finalTime
+        """
+        return self.stop - self.pTime - self.startT
+
+    def getDeliveriesTime(self, agent):
+        print("# ---------------------------------------- #")
+        print("-> {}-{}:".format(agent.name, agent.myCompany))
+        total = 0
+        if len(agent.dMade) > 0:
+            for i,d in enumerate(agent.dMade):
+                print("{})\nid: {} \ Time: {}.".format(i+1, d.get('id'), d.get('time')))
+                total+=d.get('time')
+
+            print("Total: {}".format(total))
+            print("Avarage: {}".format(total/len(agent.dMade)))
+        else:
+            print("No deliveries made.")
+    def checkEnd(self):
+        """
+        Not used yet. And doesnt work.
+        :return:
+        """
+        if self.numDeliveries <= 0:
+            self.stop = time.perf_counter()
+            self.finalTime = self.stop - self.pTime - self.startT
+            print("Done!")
+            return True
+        else:
+            return False
+
 
     # depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
     def reactiveAgentDecision(self):
@@ -173,6 +194,14 @@ class World:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    print("# ---------- QUIT ---------- #")
+                    self.stop = time.perf_counter()
+                    print("Time execution: {}".format(self.getFinalTime()))
+                    print("Time paused: {}".format(self.getPausedTime()))
+                    print("Deliveries so far:")
+                    self.getDeliveriesTime(self.agent01)
+                    self.getDeliveriesTime(self.agent02)
+                    print("# --------------------------  #")
                     pygame.quit()
                     sys.exit()
                 if event.key == pygame.K_SPACE:     # SPACE to start/stop agent
@@ -184,16 +213,23 @@ class World:
                     if self.paused:
                         global tic
                         tic = time.perf_counter()
+                        self.numPauses+=1
+                        # when pause check if the agents has any delivery, so they wont return a higher time for the delivery
+                        self.checkForCargoInAgent(self.agent01, self.numPauses)
+                        self.checkForCargoInAgent(self.agent02, self.numPauses)
                     elif not self.paused and self.first:
+                        # do this to start the timer after the user press space for the first time
                         self.lastP = 0
                         self.pTime += self.lastP
-                        pausedTime += self.lastP
+                        #pausedTime += self.lastP
                         self.first = False
-                        self.start = time.perf_counter() #quando iniciar pela primeira vez
+                        self.startT = time.perf_counter() # quando iniciar pela primeira vez
                     elif not self.paused and not self.first:
+                        # when pause other times
                         self.lastP = time.perf_counter() - tic
                         self.pTime += self.lastP
-                        pausedTime+=self.lastP
+                        self.pauses.append(self.lastP)
+                        pauses.append(self.lastP)
                     # --------------------------- #
                     self.start = True
 
@@ -230,10 +266,13 @@ class World:
         self.all_sprites.update()
         self.all_sprites.draw(self.display_surface)
 
-    def getTime(self):
+    def getPausedTime(self):
         """
         Return pausedTime.
         """
+        pausedTime = 0
+        for p in self.pauses:
+            pausedTime = pausedTime + p
         return pausedTime
 
     def generateNDeliveries(self, num):
@@ -260,3 +299,8 @@ class World:
             self.deliveries.append(dd)
             self.numDeliveries += 1
 
+    def checkForCargoInAgent(self, agent, numPause):
+        if agent.hasCargo:
+            agent.pausedDelivering.append({
+                'id_delivery': agent.idDelivery,
+                'numPause': numPause})  # append o número da pause, para usar como index quando fizer o get do time dessa pause
