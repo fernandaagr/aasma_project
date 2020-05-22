@@ -52,8 +52,17 @@ And detect if there is (Sensors):
 #### Reactive:
 * agentDecision()
 
-#### Proactive Agent:
- * 
+#### Proactive Ideas:
+
+* Criar matrix para armazenar as cells q o agent passou e o buildings q ele encontrou (igual a worldObjects e agents). As cells da company tbm. Se ele estiver carregando uma delivery e encontrar um outro predio com delivery, colocar esse predio em outro array (ou algo assim). Quando terminar a delivery verifica se ainda existe alguma delivery para ser entregue nos predios q ele detectou anteriormente e que tinham delivery.
+
+* checkSurroundings:
+	-verifica as cells ao redor do agent para analizar a melhor ação. Se ao redor houver algum prédio já detectado anteriormente e não tem delivery o agente faz rotate ou continua se movendo para outro local. Se tiver a company e a bateria estiver baixa vai carregar.
+	-se o agent tiver uma delivery e ao redor houver algum prédio ele vai para este predio.
+
+* moveTo:
+	-como o agente vai ter seu propio mapa do mundo ele pode gerar um caminho para um determinado ponto baseado nisso, se necessário.
+
 
 ### ToDos:
 * (?) uma função para verificar o ultimo movimento/rotate e se a posição se manteve a mesma, para o agente não ficar muito tempo "preso" na mesma posição muito tempo
