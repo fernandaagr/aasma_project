@@ -30,13 +30,14 @@ def main():
 
             if myWorld.checkEnd():
                 # antes disso tem de pedir aos agents para voltar para o headQuarters, ou não
-                running = False
+                # running = False
+                myWorld.paused = True
         # get time of deliveries ------> mudar para loop depois
         myWorld.getDeliveriesTime(myWorld.agent01)
         myWorld.getDeliveriesTime(myWorld.agent02)
 
         print("Final execution time: {}.".format(round(myWorld.getFinalTime(), 2)))
-        print("Paused time: {}.".format(round(myWorld.getPausedTime(), 2) ))
+        print("Paused time: {}.".format(round(myWorld.getPausedTime(), 2)))
 
     except Exception as ex:
         stop = time.perf_counter()

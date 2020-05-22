@@ -31,13 +31,12 @@ class reactiveAgent(pygame.sprite.Sprite):
         self.pausedDelivering = []
         self.count = 10  # equilave a 10 iterações ~=1.4189 segundos --> to recharge
         # self.count = 100  # equilave a 100 iterações ~=10 * 1.4189 segundos
-        self.image, self.rect = utils.setImage(self.x, self.y, "dog")
+        self.image, self.rect = utils.setImage(self.x, self.y, "dogr")
 
         world.World.updateAgentLocation(world.World, self.x, self.y, True)
 
         print("-> {} at: row: {}, col: {}".format(self.name, self.x, self.y))
         print("-> {}: hasCargo={}, idDelivery={}".format(self.name, self.hasCargo, self.idDelivery))
-
 
     # ------------------------#
     #      AGENT DECISION     #
@@ -125,13 +124,13 @@ class reactiveAgent(pygame.sprite.Sprite):
         print("-> {}-{}: droped delivery.".format(self.name, self.myCompany))
         # update delivery
         world.World.updateDelivery(world.World,self.idDelivery, 'finished', 'True')  # update delivery, so it knows which agents is delivering
-        # update agent
-
+        # compute time of delivery
         self.stopD = time.perf_counter()
         pauses = self.checkForPausesInDelivery()
         final = self.stopD - self.startD - pauses
         #print("Times: start={}, stop={}, pauses={}, final={}.".format(self.startD, self.stopD, pauses, final))
         self.dMade.append({'id': self.idDelivery, 'time': final})
+        # update agent
         self.updateAgent()
         # self.image, self.rect = utils.setImage(self.x, self.y, "dog")
 
@@ -195,8 +194,6 @@ class reactiveAgent(pygame.sprite.Sprite):
             self.count = 10
             return True
         else:
-            current = time.perf_counter()
-            #t = current - world.World.getTime(world.World)
             self.count -= 1
             return False
 
@@ -205,9 +202,7 @@ class reactiveAgent(pygame.sprite.Sprite):
         if len(self.pausedDelivering) > 0:
             for p in self.pausedDelivering:
                 if p.get('id_delivery') == self.idDelivery:
-                    pause = pause + world.pauses[p.get('numPause') - 1]
-
-
+                    pause = pause + world.pauses[p.get('numPause') - 1] # get the pause from world.
             return pause
         return pause
     #------------------------#

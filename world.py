@@ -4,7 +4,7 @@ import numpy as np
 from reactiveAgent import reactiveAgent
 import constants, Cells, Walls, Buildings, Deliveries
 import utils
-from datetime import datetime
+from CompanyAgent import CompanyAgent
 
 objects = np.empty([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=object)
 agents = np.zeros([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], dtype=bool)
@@ -17,6 +17,7 @@ class World:
     """
     Init world.
     """
+    com = None
     def __init__(self):
         self.start = False
         self.paused = True
@@ -59,10 +60,23 @@ class World:
         self.agent01 = reactiveAgent(0, 1, 1, 'cp1', self.display_surface, "A1")
         self.agent02 = reactiveAgent(0, 1, 2, 'cp1', self.display_surface, "A2")
 
+
+        # ------------------------------------------------- #
+        """
+        Testes class CompanyAgent
+        1)uncomment da linha 68 até 75, 194 até 204, 292 até 294.
+        2)comment: 60, 61; 206 até 214; 296, 297, 232, 233, 248, 249
+        3)main: comment 36 e 37
+       
+        """
+        #cp2 = self.cells.__dict__.get('cp2')
+        #keys = cp2[0].__dict__
+        #cp_x = keys.get('x')
+        #cp_y = keys.get('y')
+        #cp_name = keys.get('name')
+        #World.com = CompanyAgent(cp_x, cp_y, cp_name, 2, self.display_surface)
+
         self.drawGrid()
-
-
-
 
     # ----------------------------- #
     # ----- Auxiliary Methods ----- #
@@ -70,6 +84,11 @@ class World:
     """
         Methods to help access/manipulate matrix with world objects
     """
+
+    def askCompanyWhatToDo(self, agentId):
+        print("asking...")
+        #print(agentId)
+        World.com.whatToDo(agentId)
 
     def getWorldObject(self, x, y):
         """
@@ -140,13 +159,13 @@ class World:
         total = 0
         if len(agent.dMade) > 0:
             for i,d in enumerate(agent.dMade):
-                print("{})\nid: {} \ Time: {}.".format(i+1, d.get('id'), d.get('time')))
+                print("{}) id: {} \ Time: {}.".format(i+1, d.get('id'), round(d.get('time'), 2)))
                 total+=d.get('time')
-
-            print("Total: {}".format(total))
-            print("Avarage: {}".format(total/len(agent.dMade)))
+            print("Total: {}".format(round(total, 2)))
+            print("Avarage: {}".format(round(total/len(agent.dMade), 2)))
         else:
             print("No deliveries made.")
+
     def checkEnd(self):
         """
         Not used yet. And doesnt work.
@@ -154,14 +173,14 @@ class World:
         """
         if self.numDeliveries <= 0:
             self.stop = time.perf_counter()
-            self.finalTime = self.stop - self.pTime - self.startT
+            self.finalTime = self.getFinalTime()
             print("Done!")
             return True
         else:
             return False
 
-
     # depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
+
     def reactiveAgentDecision(self):
         """
         Agent movement on game loop.
@@ -172,17 +191,28 @@ class World:
         :parameters -> used in agents sensors
         """
         r = random.random()
-        #if self.agent.pause:
-        #    self.start = not self.start
-        if r <= 0.8:
-            self.agent01.agentDecision()
-        elif not self.agent01.pause:
-            self.agent01.rotate()
+
+        #agent01 = World.com.__dict__.get('agents')[0]
+        #agent02 = World.com.__dict__.get('agents')[1]
+        #if r <= 0.8:
+        #    agent02.agentDecision()
+        #elif not agent02.pause:
+        #    agent02.rotate()
+
+        #if r <= 0.8:
+        #   agent01.agentDecision()
+        #elif not agent01.pause:
+        #   agent01.rotate()
 
         if r <= 0.8:
             self.agent02.agentDecision()
         elif not self.agent02.pause:
             self.agent02.rotate()
+
+        if r <= 0.8:
+            self.agent01.agentDecision()
+        elif not self.agent01.pause:
+            self.agent01.rotate()
 
     def handleEvents(self):
         """
@@ -254,10 +284,15 @@ class World:
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('cp2'):
+            print(elem.__dict__)
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('obstacles'):
             self.all_sprites.add(elem)
+
+        #for elem in World.com.__dict__.get('agents'):
+            #print(elem.__dict__)
+        #    self.all_sprites.add(elem)
 
         self.all_sprites.add(self.agent01)
         self.all_sprites.add(self.agent02)
