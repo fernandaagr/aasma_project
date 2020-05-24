@@ -14,6 +14,9 @@
 * WorldObject.py: class the to assist access/manipulation of world objects.
 
 * utils.py: some functions that are used more than once in different files.
+* CompanyAgent.py: Creates company agents. As robots are agents of a company, they are created through this class. It implements a kind of communication with the robot agents: if the agent has a low battery, "ask" the company what to do. For reactives, the company calculates the distance between the drop point and the headquarters and sees what is the best task to be performed.
+
+Use bfs to compute the best path to the nearest point.
 
 Build world with normal cells, walls and a few buildings (simple map used, see a better one and bigger later).
 * ESC to quit;
@@ -50,10 +53,16 @@ And detect if there is (Sensors):
 * isHeadQuarters;
 
 #### Reactive:
-* agentDecision()
+* agentDecision();
+* same thing as BasicAgents;
+
+### Company Agemt:
+* distanceTo: Euclidian distance between two points;
+* bfs_map: generate path based on coodinates visited by agent. -> incompleto.
+* floodFill: get all positions visited by the agent and and mark each position (has a bug). Not being used.
 
 #### Proactive Ideas:
-
+*
 * Criar matrix para armazenar as cells q o agent passou e o buildings q ele encontrou (igual a worldObjects e agents). As cells da company tbm. Se ele estiver carregando uma delivery e encontrar um outro predio com delivery, colocar esse predio em outro array (ou algo assim). Quando terminar a delivery verifica se ainda existe alguma delivery para ser entregue nos predios q ele detectou anteriormente e que tinham delivery.
 
 * checkSurroundings:
@@ -66,10 +75,6 @@ And detect if there is (Sensors):
 
 ### ToDos:
 * (?) uma função para verificar o ultimo movimento/rotate e se a posição se manteve a mesma, para o agente não ficar muito tempo "preso" na mesma posição muito tempo
-* isAgentInFront; -> tinha esquecido
-* tempo minimo para realizar deliveries disponíveis (?), se acabar antes gerar mais deliveries;
-* ver time de execução. já tem o update do paused time.
-* comunicação agent/company, company/agent;
 * (?) moveTo/sendTo: função que recebe as coordenadas de cada step do agent, quando ele tiver q voltar pra company pra recarregar ou enviar agent para outra coordenada especifica;
 
 Based on [this tutorial](https://github.com/poly451/Tutorials/tree/master/Python:%20Create%20a%20Grid) to create what we have so far. Also, using sprit she uses for the agent.
