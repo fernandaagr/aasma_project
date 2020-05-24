@@ -33,8 +33,8 @@ def main():
             # running = False
             myWorld.paused = True
     # get time of deliveries ------> mudar para loop depois
-    myWorld.getDeliveriesTime(myWorld.agent01)
-    myWorld.getDeliveriesTime(myWorld.agent02)
+    #myWorld.getDeliveriesTime(myWorld.agent01)
+    #myWorld.getDeliveriesTime(myWorld.agent02)
     for i,a in enumerate(myWorld.com.__dict__.get('agents')[i]):
         myWorld.getDeliveriesTime(myWorld, a)
 

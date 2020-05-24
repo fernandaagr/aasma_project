@@ -60,8 +60,8 @@ class World:
         World.numDeliveries = self.numDeliveries
 
         # isso tbm vai mudar, vai criar os agentes de acordo com a quantidade de cells da company
-        self.agent01 = reactiveAgent(0, 1, 1, 'cp1', self.display_surface, "A1")
-        self.agent02 = reactiveAgent(0, 1, 2, 'cp1', self.display_surface, "A2")
+        #self.agent01 = reactiveAgent(0, 1, 1, 'cp1', self.display_surface, "A1")
+        #self.agent02 = reactiveAgent(0, 1, 2, 'cp1', self.display_surface, "A2")
 
         # ------------------------------------------------- #
         """
@@ -95,7 +95,7 @@ class World:
         """
         r = random.random()
 
-        if r <= 0.8:
+        '''if r <= 0.8:
             self.agent02.agentDecision()
         elif not self.agent02.pause:
             self.agent02.rotate()
@@ -103,19 +103,19 @@ class World:
         if r <= 0.8:
             self.agent01.agentDecision()
         elif not self.agent01.pause:
-            self.agent01.rotate()
+            self.agent01.rotate() '''
 
-        # agent01 = World.com.__dict__.get('agents')[0]
-        # agent02 = World.com.__dict__.get('agents')[1]
-        # if r <= 0.8:
-        #    agent02.agentDecision()
-        # elif not agent02.pause:
-        #     agent02.rotate()
+        agent01 = World.com.__dict__.get('agents')[0]
+        agent02 = World.com.__dict__.get('agents')[1]
+        if r <= 0.8:
+            agent02.agentDecision()
+        elif not agent02.pause:
+            agent02.rotate()
 
-        # if r <= 0.8:
-        #   agent01.agentDecision()
-        # elif not agent01.pause:
-        #    agent01.rotate()
+        if r <= 0.8:
+            agent01.agentDecision()
+        elif not agent01.pause:
+            agent01.rotate()
 
     def askCompanyWhatToDo(self, agentId):
         print("asking...")
@@ -234,11 +234,11 @@ class World:
         for elem in self.cells.__dict__.get('obstacles'):
             self.all_sprites.add(elem)
 
-        # for elem in World.com.__dict__.get('agents'):
-        #    self.all_sprites.add(elem)
+        for elem in World.com.__dict__.get('agents'):
+            self.all_sprites.add(elem)
 
-        self.all_sprites.add(self.agent01)
-        self.all_sprites.add(self.agent02)
+        #self.all_sprites.add(self.agent01)
+        #self.all_sprites.add(self.agent02)
 
     def othersUpdates(self):
         """
@@ -292,8 +292,8 @@ class World:
                     print("Time execution: {}".format(self.getFinalTime()))
                     print("Time paused: {}".format(self.getPausedTime()))
                     print("Deliveries so far:")
-                    self.getDeliveriesTime(self.agent01)
-                    self.getDeliveriesTime(self.agent02)
+                    #self.getDeliveriesTime(self.agent01)
+                    #self.getDeliveriesTime(self.agent02)
                     print("# --------------------------  #")
                     pygame.quit()
                     sys.exit()
@@ -308,8 +308,8 @@ class World:
                         tic = time.perf_counter()
                         self.numPauses+=1
                         # when pause check if the agents has any delivery, so they wont return a higher time
-                        self.checkForCargoInAgent(self.agent01, self.numPauses)
-                        self.checkForCargoInAgent(self.agent02, self.numPauses)
+                        #self.checkForCargoInAgent(self.agent01, self.numPauses)
+                        #self.checkForCargoInAgent(self.agent02, self.numPauses)
                     elif not self.paused and self.first:
                         # do this to start the timer after the user press space for the first time
                         self.lastP = 0

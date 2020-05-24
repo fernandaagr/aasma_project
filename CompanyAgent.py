@@ -3,6 +3,7 @@ import constants
 import world, utils
 import numpy as np
 from BasicAgent import BasicAgent
+from ProactiveAgent import ProactiveAgent
 import math
 import collections
 
@@ -31,7 +32,7 @@ class CompanyAgent:
         for i in range(0, numCells):
             num = i+1
             agentName = str("A"+str(num)+"-"+self.name+"")
-            agent = BasicAgent(x, y, self.name, self.surface, agentName, num)
+            agent = ProactiveAgent(x, y, self.name, self.surface, agentName, num)
             self.agents.append(agent)
             y+=1
 
