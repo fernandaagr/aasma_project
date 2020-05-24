@@ -37,7 +37,7 @@ class Cells:
                     self.cells.append(c)
 
                     self.color = constants.SILVER
-                    self.setCell(row, col, 'cell', False, False, '')
+                    self.setCell(row, col, 'cell', False, False, True, None, '')
 
                 elif tile == 'o':
                     #o = type('obj', (object,), {'x': row, 'y': col})
@@ -45,23 +45,23 @@ class Cells:
                     self.obstacles.append(o)
 
                     self.color = constants.SILVER
-                    self.setCell(row, col, 'cell', True, False, '')
+                    self.setCell(row, col, 'cell', True, False, False, None, '')
                 elif tile == '1':
                     self.color = constants.GRAY
                     cp = Company.Company(row, col, 'cp1')
                     self.cp1.append(cp)
-                    self.setCell(row, col, 'cp1', False, False, '')
+                    self.setCell(row, col, 'cp1', False, False, True, None, '')
                 elif tile == '2':
                     self.color = constants.LIGHTLATEGREY
                     cp = Company.Company(row, col, 'cp2')
                     self.cp2.append(cp)
-                    self.setCell(row, col, 'cp2', False, False, '')
+                    self.setCell(row, col, 'cp2', False, False, True, None, '')
 
     def __getitem__(self, item):
         return self.cells[item]
 
-    def setCell(self, x, y, typeCell, obs=False, delivery=False, info=''):
-        e = WorldObject.WorldObject(x, y, typeCell, obs, delivery, info)
+    def setCell(self, x, y, typeCell, obs=False, delivery=False, isFree=False, marked=None, info=''):
+        e = WorldObject.WorldObject(x, y, typeCell, obs, delivery, isFree, marked, info)
         world.objects[x][y] = e
 
         utils.setRect(x, y, self.surface, self.color)

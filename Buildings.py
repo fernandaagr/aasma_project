@@ -33,7 +33,7 @@ class Buildings:
                     #b = Building(pos, row, col, False)
                     self.buildings.append(b)
 
-                    e = WorldObject.WorldObject(row, col, 'building', False, False, '')
+                    e = WorldObject.WorldObject(row, col, 'building', False, False, False, None, '')
                     world.objects[row][col] = e
                     utils.setRect(row, col, surface, constants.DARKSLATEGRAY)
 

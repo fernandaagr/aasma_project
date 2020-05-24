@@ -17,7 +17,7 @@ class Walls:
                     w = type('obj', (object,), {'x': row, 'y': col})
                     self.walls.append(w)
 
-                    e = WorldObject.WorldObject(row, col, 'wall', False, False, '')
+                    e = WorldObject.WorldObject(row, col, 'wall', False, False, False, None, '')
 
                     world.objects[row][col] = e
                     utils.setRect(row, col, surface, constants.BLACK)
