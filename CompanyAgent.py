@@ -172,10 +172,20 @@ class CompanyAgent:
 
         return points
 
+
+    # ISSO VAI EM PROACTIVE AGENT, i think #
     def checkSurroundings(self, x, y):
         positions = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]  # right, left, up, down
         for px, py in positions:
-            
+            pass
+            # get info about these positions (from agents map or not) to se what's arround.
+            # If is a buildings never visited go there,
+            # if agent has no cargo, check if he detected a delivery there previously,
+            # if is headquarters, check battery to see if needs to recharge,
+            # if there is an obstacle in one of the positions avoid,
+            # if are free cells move randmoly
+
+        return "Best Action"
         pass
 
     def updateMark(self, x, y, mark):
