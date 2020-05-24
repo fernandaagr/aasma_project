@@ -1,0 +1,26 @@
+-> IMPLEMENTAÇÃO
+  * pygame para interface do ambiente e dos agentes. Para visualizar melhor o funcionamento dos agentes no ambiente...
+  * explicar board, dizer o que cada objeto é (buildings, obstacles, ....). Colocar imagem do world e indicar na imagem o que é cada coisa.
+  * ver a proposal e o que conseguimos fazer ou mudamos e tentar explicar o porque.
+  * falar do bfs para gerar a path entre dois pontos (?).
+  * talvez explicar com mais detalhes alguma caracteristica dos agentes.
+  * 
+
+
+-> RESULTADOS
+  * mostrar configuração usada para realizar os testes. 2 agentes em cada company, os tipos de agentes, o número de deliveries geradas (pensei em testar sempre com um número fixo, para ficar mais fácil).
+  * testar com um número especifico de frames per second, para ser mais rápido, mas se der testar com a velocidade "normal".
+  * não sei se precisa falar da configuração do computador usado tbm.
+  * tabela com resuldados dos testes:  --> (?)
+    ->Agentes: melhor, pior e a média de todos resultados. Tempo médio de cada tipo de agente para realizar as entregas que conseguiu recolher, número médio de entregas feitas por cada tipo, se precisaram recarregar colocar isso tbm.
+    ->Companies: melhor, pior e a média de todos resultados. Tempo médio de cada company para realizar as entregas que conseguiu recolher, número médio de entregas feitas pela company.
+    ->Tempo total de execução para realizar todas as deliveries, independente de company e tipo de agente.
+
+
+-> CONCLUSÕES
+  * os agentes obtiveram o desempenho esperado?
+  * conseguimos fazer tudo?
+  * qual o melhor agente, diante das caracteristicas de cada e do que conseguimos implementar?
+  ...
+  
+  -> REFERENCIAS
