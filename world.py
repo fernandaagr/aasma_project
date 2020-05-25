@@ -18,7 +18,8 @@ class World:
     """
     Init world.
     """
-    com = None
+    company01 = None
+    company02 = None
     numDeliveries = 0
 
     def __init__(self):
@@ -54,7 +55,7 @@ class World:
         self.deliveries = []
         print(" ---------- Deliveries ---------- ")
 
-        self.generateNDeliveries(8)
+        self.generateNDeliveries(7)
 
         print(" ------------------------------ ")
         print("num deliveries: ", self.numDeliveries)
@@ -71,12 +72,19 @@ class World:
         2)comment: 63, 64; 98 até 106 até 214; 240, 241; 295, 296, 311, 312;  248, 249
         3)main: comment 36 e 37
         """
+        cp1 = self.cells.__dict__.get('cp1')
+        keys = cp1[0].__dict__
+        cp1_x = keys.get('x')
+        cp1_y = keys.get('y')
+        cp1_name = keys.get('name')
+        World.company01 = CompanyAgent(cp1_x, cp1_y, cp1_name, 2, self.display_surface, 3)
+
         cp2 = self.cells.__dict__.get('cp2')
         keys = cp2[0].__dict__
-        cp_x = keys.get('x')
-        cp_y = keys.get('y')
-        cp_name = keys.get('name')
-        World.com = CompanyAgent(cp_x, cp_y, cp_name, 2, self.display_surface)
+        cp2_x = keys.get('x')
+        cp2_y = keys.get('y')
+        cp2_name = keys.get('name')
+        World.company02 = CompanyAgent(cp2_x, cp2_y, cp2_name, 2, self.display_surface, 2)
 
         self.drawGrid()
 
@@ -89,38 +97,47 @@ class World:
 
     # depois mudar isto. Quando o "jogo" começar esperar o user clicar para iniciar.
 
-    def reactiveAgentDecision(self):
+    def decision(self):
         """
         Agent movement on game loop.
         Based on a random prop will rotate even if does not colide with anything.
         """
-        r = random.random()
+        rands = []
+        for i in range(4):
+            rands.append(random.random())
 
-        # if r <= 0.8:
-        #     self.agent02.agentDecision()
-        # elif not self.agent02.pause:
-        #     self.agent02.rotate()
-        #
-        # if r <= 0.8:
-        #     self.agent01.agentDecision()
-        # elif not self.agent01.pause:
-        #     self.agent01.rotate()
+        agent01cp01 = World.company01.__dict__.get('agents')[0]  # reactive
+        agent02cp01 = World.company01.__dict__.get('agents')[1]  # proactive
+        agent01cp02 = World.company02.__dict__.get('agents')[0]
+        agent02cp02 = World.company02.__dict__.get('agents')[1]
+        if rands[0] <= 0.8:
+           agent01cp01.agentDecision()
+        elif not agent01cp01.pause:
+            agent01cp01.rotate()
 
-        agent01 = World.com.__dict__.get('agents')[0]
-        agent02 = World.com.__dict__.get('agents')[1]
-        if r <= 0.8:
-           agent02.agentDecision()
-        elif not agent02.pause:
-            agent02.rotate()
+        if rands[1] <= 0.8:
+            agent02cp01.agentDecision()
+        elif not agent02cp01.pause:
+            agent02cp01.rotate()
 
-        if r <= 0.8:
-          agent01.agentDecision()
-        elif not agent01.pause:
-           agent01.rotate()
+        if rands[2] <= 0.8:
+           agent01cp02.agentDecision()
+        elif not agent01cp02.pause:
+            agent01cp02.rotate()
 
-    def askCompanyWhatToDo(self, agentId):
+        if rands[3] <= 0.8:
+           agent02cp02.agentDecision()
+        elif not agent02cp02.pause:
+            agent02cp02.rotate()
+
+    def askCompanyWhatToDo(self, agentId, company):
         print("Contacting company...")
-        return World.com.whatToDo(agentId)
+        if company == 'cp1':
+            return World.company01.whatToDo(agentId)
+        else:
+            return World.company02.whatToDo(agentId)
+
+
 
     def generateNDeliveries(self, num):
         """Generate and perform necessary updates."""
@@ -229,14 +246,17 @@ class World:
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('cp2'):
-            print(elem.__dict__)
+            # print(elem.__dict__)
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('obstacles'):
             self.all_sprites.add(elem)
 
-        for elem in World.com.__dict__.get('agents'):
-           self.all_sprites.add(elem)
+        for elem in World.company01.__dict__.get('agents'):
+            self.all_sprites.add(elem)
+
+        for elem in World.company02.__dict__.get('agents'):
+            self.all_sprites.add(elem)
 
         # self.all_sprites.add(self.agent01)
         # self.all_sprites.add(self.agent02)
@@ -293,8 +313,10 @@ class World:
                     print("Time execution: {}".format(self.getFinalTime()))
                     print("Time paused: {}".format(self.getPausedTime()))
                     print("Deliveries so far:")
-                    # self.getDeliveriesTime(self.agent01)
-                    # self.getDeliveriesTime(self.agent02)
+                    for a in World.company01.__dict__.get('agents'):
+                        self.getDeliveriesTime(a)
+                    for a in World.company02.__dict__.get('agents'):
+                        self.getDeliveriesTime(a)
                     print("# --------------------------  #")
                     pygame.quit()
                     sys.exit()
@@ -309,6 +331,10 @@ class World:
                         tic = time.perf_counter()
                         self.numPauses+=1
                         # when pause check if the agents has any delivery, so they wont return a higher time
+                        for a in World.company01.__dict__.get('agents'):
+                            self.checkForCargoInAgent(a, self.numPauses)
+                        for a in World.company02.__dict__.get('agents'):
+                            self.checkForCargoInAgent(a, self.numPauses)
                         # self.checkForCargoInAgent(self.agent01, self.numPauses)
                         # self.checkForCargoInAgent(self.agent02, self.numPauses)
                     elif not self.paused and self.first:

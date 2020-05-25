@@ -1,9 +1,9 @@
-import pygame
-import sys, os, random
-import constants
-from world import World
 import time
-from datetime import datetime
+
+import pygame
+
+from world import World
+
 
 def main():
     myWorld = World()
@@ -15,7 +15,7 @@ def main():
     while running:
         clock = pygame.time.Clock()     # Setup the clock for a decent framerate
         pygame.display.flip()           # Flip everything to the display
-        clock.tick(8)                   # Ensure program maintains a rate of n frames per second
+        clock.tick(5)                   # Ensure program maintains a rate of n frames per second
 
         myWorld.handleEvents()
         myWorld.drawAgents()
@@ -26,16 +26,22 @@ def main():
             if myWorld.paused:
                 pass
             elif not myWorld.paused:
-                myWorld.reactiveAgentDecision()
+                myWorld.decision()
 
         if myWorld.checkEnd():
             # antes disso tem de pedir aos agents para voltar para o headQuarters, ou não
             # running = False
             myWorld.paused = True
     # get time of deliveries ------> mudar para loop depois
-    #myWorld.getDeliveriesTime(myWorld.agent01)
-    #myWorld.getDeliveriesTime(myWorld.agent02)
-    for i,a in enumerate(myWorld.com.__dict__.get('agents')[i]):
+    myWorld.getDeliveriesTime(myWorld.agent01cp01)
+    myWorld.getDeliveriesTime(myWorld.agent102cp01)
+    myWorld.getDeliveriesTime(myWorld.agent01cp02)
+    myWorld.getDeliveriesTime(myWorld.agent02cp02)
+
+    for i,a in enumerate(myWorld.company01.__dict__.get('agents')[0]):
+        myWorld.getDeliveriesTime(myWorld, a)
+
+    for i,a in enumerate(myWorld.company02.__dict__.get('agents')[0]):
         myWorld.getDeliveriesTime(myWorld, a)
 
     print("Final execution time: {}.".format(round(myWorld.getFinalTime(), 2)))

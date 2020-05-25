@@ -3,13 +3,14 @@ import constants
 import world, utils
 import numpy as np
 from BasicAgent import BasicAgent
+from reactiveAgent import reactiveAgent
 from ProactiveAgent import ProactiveAgent
 import math
 import collections
-import pprint
+
 
 class CompanyAgent:
-    def __init__(self, x, y, company, numCells, surface):
+    def __init__(self, x, y, company, numCells, surface, rot):
         super().__init__()
         self.x = x
         self.y = y
@@ -17,23 +18,28 @@ class CompanyAgent:
         self.name = company
         self.numCells = numCells
         self.agents = []
-        # for testing, remove later
-        self.marked = np.zeros([constants.NUMBER_OF_BLOCKS_WIDE-2, constants.NUMBER_OF_BLOCKS_HIGH-2], dtype=int)
+        self.rot = rot
 
         self.createAgents(self.numCells)
-        print("Company {} starts in (x: {}, y:{}) and ends in (x: {}, y:{}).".format(self.name, self.x, self.y, self.x, self.y+1))
-        for i,a in enumerate(self.agents):
-            print("-> [{}] ".format(a.__dict__.get('name')))
+        # print("Company {} starts in (x: {}, y:{}) and ends in (x: {}, y:{}).".format(self.name, self.x, self.y, self.x, self.y+1))
+        # for i,a in enumerate(self.agents):
+        #     print("-> [{}] ".format(a.__dict__.get('name')))
 
     def createAgents(self, numCells):
         x = self.x
         y = self.y
-        for i in range(0, numCells):
-            num = i+1
-            agentName = str("A"+str(num)+"-"+self.name+"")
-            agent = ProactiveAgent(x, y, self.name, self.surface, agentName, num)
-            self.agents.append(agent)
-            y+=1
+        agentName1 = str("A" + str(1) + "-" + self.name + "")
+        agent1 = reactiveAgent(x, y, self.name, self.surface, agentName1, 1, self.rot)
+        agentName2 = str("A" + str(2) + "-" + self.name + "")
+        agent2 = ProactiveAgent(x, y+1, self.name, self.surface, agentName2, 2, self.rot)
+        self.agents.append(agent1)
+        self.agents.append(agent2)
+        # for i in range(0, numCells):
+        #     num = i+1
+        #     agentName = str("A"+str(num)+"-"+self.name+"")
+        #     agent = BasicAgent(x, y, self.name, self.surface, agentName, num)
+        #     self.agents.append(agent)
+        #     y+=1
 
     def whatToDo(self, agentId):
         battery = 0
@@ -51,7 +57,7 @@ class CompanyAgent:
         if battery <= 25 and hasCargo:
             print("Agent has low battery and its carrying a delivery.")
             # get id and delivery info
-            idDelivery = currentAgent.get('idDelivery')  # BUG - as vezes retorna id None, mesmo possuindo o id
+            idDelivery = currentAgent.get('idDelivery')
             deliveryInfo = world.deliveries[idDelivery].__dict__
             dx = deliveryInfo.get('dp_x')
             dy = deliveryInfo.get('dp_y')
@@ -95,7 +101,8 @@ class CompanyAgent:
         queue = collections.deque([[o]])
         seen = set([o])
         xd, yd = d
-        building, wall, obs, cp, clear, unknown = 'b', 'w', 'o', 'h', '.', '-'
+        # building, wall, obs, cp, clear, unknown = 'b', 'w', 'o', 'h', '.', '-'
+        building, wall, obs, cp, clear, unknown = 'building', 'wall', 'obs', 'h', '.', '-'
         while queue:
             path = queue.popleft()
             x, y = path[-1]
@@ -103,9 +110,12 @@ class CompanyAgent:
                 return path
             positions = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]  # right, left, up, down
             for x2, y2 in positions:
-                if 0 <= x2 < constants.NUMBER_OF_BLOCKS_WIDE-1 and 0 <= y2 < constants.NUMBER_OF_BLOCKS_HIGH-1 and \
-                        agentMap[y2][x2] != building and agentMap[y2][x2] != wall and agentMap[y2][x2] != obs \
-                        and (x2, y2) not in seen:
+                tp = world.World.getWorldObject(world.World, x2, y2).__dict__.get('type')
+                # if 0 <= x2 < constants.NUMBER_OF_BLOCKS_WIDE-1 and 0 <= y2 < constants.NUMBER_OF_BLOCKS_HIGH-1 and \
+                #         agentMap[y2][x2] != building and agentMap[y2][x2] != wall and agentMap[x2][y2] != unknown and agentMap[y2][x2] != obs \
+                #         and (x2, y2) not in seen:
+                if 0 <= x2 < constants.NUMBER_OF_BLOCKS_WIDE - 1 and 0 <= y2 < constants.NUMBER_OF_BLOCKS_HIGH - 1 and \
+                        tp != building and tp != wall and tp != obs and (x2, y2) not in seen:
                     queue.append(path + [(x2, y2)])
                     seen.add((x2, y2))
 
