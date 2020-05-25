@@ -4,6 +4,8 @@
 
 #### HOW TO RUN:
 
+* É necessário instalar o pygame para correr o projeto!
+
 * In your terminal go to the directory of the main.py file and  run "python main.py" or "python3 main.py"
 
 ### FILES:
