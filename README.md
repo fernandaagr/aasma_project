@@ -67,21 +67,9 @@ And detect if there is (Sensors):
 * bfs_map: generate path based on coodinates visited by agent. -> incompleto.
 * floodFill: get all positions visited by the agent and and mark each position (has a bug). Not being used.
 
-#### Proactive Ideas:
-*
-* Criar matrix para armazenar as cells q o agent passou e o buildings q ele encontrou (igual a worldObjects e agents). As cells da company tbm. Se ele estiver carregando uma delivery e encontrar um outro predio com delivery, colocar esse predio em outro array (ou algo assim). Quando terminar a delivery verifica se ainda existe alguma delivery para ser entregue nos predios q ele detectou anteriormente e que tinham delivery.
-
-* checkSurroundings:
-	-verifica as cells ao redor do agent para analizar a melhor ação. Se ao redor houver algum prédio já detectado anteriormente e não tem delivery o agente faz rotate ou continua se movendo para outro local. Se tiver a company e a bateria estiver baixa vai carregar.
-	-se o agent tiver uma delivery e ao redor houver algum prédio ele vai para este predio.
-
-* moveTo:
-	-como o agente vai ter seu propio mapa do mundo ele pode gerar um caminho para um determinado ponto baseado nisso, se necessário.
-
-
 #### HOW TO RUN:
 
-Based on [this tutorial](https://github.com/poly451/Tutorials/tree/master/Python:%20Create%20a%20Grid) to create what we have so far. Also, using sprit she uses for the agent.
+Interface based on [this tutorial](https://github.com/poly451/Tutorials/tree/master/Python:%20Create%20a%20Grid) to create what we have so far. Also, using sprit she uses for the agent.
 
 
 
