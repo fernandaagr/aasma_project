@@ -3,13 +3,11 @@ import constants
 import world, utils
 import numpy as np
 from BasicAgent import BasicAgent
-from ProactiveAgent import ProactiveAgent
 import math
 import collections
-
+import pprint
 
 class CompanyAgent:
-
     def __init__(self, x, y, company, numCells, surface):
         super().__init__()
         self.x = x
@@ -32,7 +30,7 @@ class CompanyAgent:
         for i in range(0, numCells):
             num = i+1
             agentName = str("A"+str(num)+"-"+self.name+"")
-            agent = ProactiveAgent(x, y, self.name, self.surface, agentName, num)
+            agent = BasicAgent(x, y, self.name, self.surface, agentName, num)
             self.agents.append(agent)
             y+=1
 
@@ -41,23 +39,22 @@ class CompanyAgent:
         hasCargo = False
         x = 0
         y = 0
-        print("Agent with id {} want to know what to do!".format(agentId))
-        for agent in self.agents:
-            if agentId == agent.__dict__.get('myId'):
-                battery = agent.__dict__.get('battery')
-                hasCargo = agent.__dict__.get('hasCargo')
-                x = agent.__dict__.get('x')
-                y = agent.__dict__.get('y')
+        currentAgent = self.agents[agentId-1].__dict__
+        battery = currentAgent.get('battery')
+        hasCargo = currentAgent.get('hasCargo')
+        x = currentAgent.get('x')
+        y = currentAgent.get('y')
+        agentMap = currentAgent.get('myWorldMap')
 
-        print("Agent pos: x: {}, y:{}.".format(x, y))
+        print("Agent pos: ({}, {}).".format(x, y))
         if battery <= 25 and hasCargo:
-            print("if battery and cargo")
+            print("Agent has low battery and its carrying a delivery.")
             # get id and delivery info
-            idDelivery = agent.__dict__.get('idDelivery')  # BUG - as vezes retorna id None, mesmo possuindo o id
+            idDelivery = currentAgent.get('idDelivery')  # BUG - as vezes retorna id None, mesmo possuindo o id
             deliveryInfo = world.deliveries[idDelivery].__dict__
-            print("Delivery info: {}.".format(deliveryInfo))
             dx = deliveryInfo.get('dp_x')
             dy = deliveryInfo.get('dp_y')
+            print("Has delivery to drop in: ({}, {}). Id={}.".format(dx, dy, deliveryInfo.get('id')))
             # compute distances
             coordsPossible = [(self.x, self.y), (self.x, self.y + 1), (dx, dy)]
             listDistances = [self.distanceTo(x, y, self.x, self.y), self.distanceTo(x, y, self.x, self.y + 1),
@@ -68,15 +65,12 @@ class CompanyAgent:
             print("Min distance: {}. | Coordinates: ({}, {}).".format(listDistances[indexCoord], new_dx,
                                                                       new_dy))  # will be used to apply floodFill
             # apply bfs to get path
-            path = self.bfs_map((x, y), (new_dx, new_dy))
+            path = self.bfs_map(agentMap, (x, y), (new_dx, new_dy))
             print(path)
-            # if len(path) >= battery:
-            #    print("Insufficient battery to perform task.")
-            # else:
-            #    print("Move to nearest available coordinates.{}, {}".format(new_dx, new_dy))
+            return path, new_dx, new_dy
 
         elif battery <= 25 and not hasCargo:
-            print("if battery and no cargo")
+            print("Agent has low battery and none delivery.")
             # compute distances
             coordsPossible = [(self.x, self.y), (self.x, self.y + 1)]
             listDistances = [self.distanceTo(x, y, self.x, self.y), self.distanceTo(x, y, self.x, self.y + 1)]
@@ -86,15 +80,11 @@ class CompanyAgent:
             print("Min distance: {}. | Coordinates: ({}, {}).".format(listDistances[indexCoord], new_dx,
                                                                       new_dy))  # will be used to apply floodFill
             # apply bfs to get path
-            path = self.bfs_map((x, y), (new_dx, new_dy))
+            path = self.bfs_map(agentMap, (x, y), (new_dx, new_dy))
             print(path)
-            # if len(path) >= battery:
-            #    print("Insufficient battery to perform task.")
-            # else:
-            #    print("Move to nearest available coordinates.{}, {}".format(new_dx, new_dy))
+            return path, new_dx, new_dy
 
-
-    def bfs_map(self, o, d):
+    def bfs_map(self, agentMap, o, d):
         """
         Compute path from origin to destination according with agents map.
         :param o: origin coordinates.
@@ -104,6 +94,7 @@ class CompanyAgent:
         queue = collections.deque([[o]])
         seen = set([o])
         xd, yd = d
+        building, wall, obs, cp, clear, unknown = 'b', 'w', 'o', 'h', '.', '-'
         while queue:
             path = queue.popleft()
             x, y = path[-1]
@@ -111,13 +102,9 @@ class CompanyAgent:
                 return path
             positions = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]  # right, left, up, down
             for x2, y2 in positions:
-                cellInfo = world.World.getWorldObject(world.World, x2, y2).__dict__
-                types = cellInfo.get('type')
-                obs = cellInfo.get('obs')
-                building, wall = 'building', 'wall'
-
                 if 0 <= x2 < constants.NUMBER_OF_BLOCKS_WIDE-1 and 0 <= y2 < constants.NUMBER_OF_BLOCKS_HIGH-1 and \
-                        types != building and not obs and types != wall and (x2, y2) not in seen:
+                        agentMap[y2][x2] != building and agentMap[y2][x2] != wall and agentMap[y2][x2] != obs \
+                        and (x2, y2) not in seen:
                     queue.append(path + [(x2, y2)])
                     seen.add((x2, y2))
 
@@ -172,7 +159,6 @@ class CompanyAgent:
                 update = False
 
         return points
-
 
     # ISSO VAI EM PROACTIVE AGENT, i think #
     def checkSurroundings(self, x, y):

@@ -3,7 +3,7 @@ import sys, os, random
 import constants
 import world, utils
 import time
-
+import numpy as np
 
 class BasicAgent(pygame.sprite.Sprite):
     tic = 0
@@ -19,7 +19,7 @@ class BasicAgent(pygame.sprite.Sprite):
         self.direction = constants.ROT[2]
         self.surface = surface
         self.name = name
-        self.battery = 100
+        self.battery = 50
         self.hasCargo = False
         self.idDelivery = None
         self.myCompany = company
@@ -39,7 +39,12 @@ class BasicAgent(pygame.sprite.Sprite):
         print("-> {} at: row: {}, col: {}".format(self.name, self.x, self.y))
         print("-> {}: hasCargo={}, idDelivery={}".format(self.name, self.hasCargo, self.idDelivery))
 
-
+        self.myWorldMap = np.full([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH], "_")
+        self.buildingsDetected = np.empty([constants.NUMBER_OF_BLOCKS_WIDE, constants.NUMBER_OF_BLOCKS_HIGH],
+                                          dtype=object)
+        self.movingTo = False
+        self.path = []
+        self.unable = False
     # ------------------------#
     #      AGENT DECISION     #
     # ------------------------#
@@ -47,15 +52,55 @@ class BasicAgent(pygame.sprite.Sprite):
 
     def agentDecision(self):
         self.aheadPosition()
-        if self.isLowBattery():
-            print("[{}] - Low battery.".format(self.name))
+        self.updateMyWorldMap()
+
+        # ver if is low battery
+
+        if self.movingTo and len(self.path) > 0:
+            print("moving")
+            print(len(self.path))
+            self.path.pop()
+
+            print(len(self.path))
+            point = self.path[0]
+            x, y = point
+
+            self.checkDirectionOfPoints(x, y)
+            print("{}, {}, {}".format(self.dx, self.dy, self.direction))
+            if not self.pause and not self.isWall() and not self.isBuilding() and not self.hasObstacle() and not self.isAgentInFront():
+                # check this because of unknown cells and to avoid objects
+                print("deve mover aqui")
+                # point = self.path.pop(0)
+                # print("move to: {}".format(point))
+                # self.moveToCoords(point)
+            elif self.isBuilding() and self.agentHasDelivery() and self.isDeliveryPoint():
+                print("drop")
+                # self.dropDelivery()
+                # self.path.pop(0)
+                # self.path = []
+                # self.movingTo = not self.movingTo
+            elif not self.pause and self.isWall() or self.hasObstacle() or self.isBuilding():
+                print("deve desviar")
+                # self.movingTo = False
+                # self.path = []
+                # self.rotate()
+            else:
+                print("else")   # cai aqui pq o primeiro da lista é sempre a posição atual
+        elif self.movingTo and not self.path:
+            print("empty")
+            self.movingTo = False
+        elif self.unable:
+            print("[{}] - Unable to continue.".format(self.name))
+            pass
+        elif self.isLowBattery():
             self.stopAgent()
             # ask company what to do
-            world.World.askCompanyWhatToDo(world.World, self.myId)
+            path, dx, dy = world.World.askCompanyWhatToDo(world.World, self.myId)
+            self.actionToPerform(path, dx, dy)
         elif self.isAgentInFront():     # tentar consertar bug
             print("Stoped!Agent in front.")
             self.stopAgent()
-        elif self.isHeadQuarters() and not self.prepared and self.battery <= 75:
+        elif self.isHeadQuarters() and not self.prepared and self.battery <= 25:
             print("[{}] - headquarters to charge.".format(self.name))
             self.prepareRecharge()
         elif self.prepared and self.checkTimeIteration():
@@ -73,6 +118,53 @@ class BasicAgent(pygame.sprite.Sprite):
     #------------------------#
     #        ACTUATORS       #
     #------------------------#
+    def moveToCoords(self, point):
+        world.World.updateAgentLocation(world.World, self.x, self.y, False)
+        (x, y) = point
+        self.checkDirectionOfPoints(x, y)     # check the current point and update self.dx and self.dy
+        self.x += self.dx   # agent moves
+        self.y += self.dy
+        world.World.updateAgentLocation(world.World, self.x, self.y, True)
+        self.rect = self.rect.move(self.dx * constants.BLOCK_WIDTH, self.dy * constants.BLOCK_HEIGHT)
+        self.battery = self.battery - 1
+        print("[{}] has moved. x,y: {},{}. dx={}, dy={}, battery={}".format(self.name, self.x, self.y, self.dx, self.dy,self.battery))
+
+    def checkDirectionOfPoints(self, coordx, coordy):
+        """
+        Check the next coord points to see in which direction the agent should move.
+        Update dx and dy based on the new values.
+        :param coordx and coordy: next (x, y) coords.
+        """
+        if coordx < self.x:     # left
+            self.dx = -1
+            self.direction = constants.ROT[2]
+        elif coordx > self.x:   # right
+            self.dx = 1
+            self.direction = constants.ROT[3]
+        elif coordx == self.x:  # same
+            self.dx = 0
+
+        if coordy > self.y:     # down
+            self.dy = 1
+            self.direction = constants.ROT[0]
+        elif coordy < self.y:   # up
+            self.dy = -1
+            self.direction = constants.ROT[1]
+        elif coordy == self.y:  # same
+            self.dy = 0
+
+
+    def actionToPerform(self, path, dx, dy):
+        if not path:
+            print("Something went wrong with computing a path.")
+            self.unable = True
+        elif len(path) >= self.getBattery():
+            print("Insufficient battery to perform a task.")
+        else:
+            print("Move to nearest available coordinates: ({}, {})".format(dx, dy))
+            self.path = path
+            self.movingTo = True
+
     def move(self):
         world.World.updateAgentLocation(world.World, self.x, self.y, False)
         self.x += self.dx
@@ -133,6 +225,21 @@ class BasicAgent(pygame.sprite.Sprite):
     # ----- Auxiliary Methods ----- #
     # ----------------------------- #
 
+    def updateMyWorldMap(self):
+        if self.isBuilding():
+            self.myWorldMap[(self.x + self.dx), (self.y + self.dy)] = 'b'
+            b = world.World.getWorldObject(world.World, self.x + self.dx, self.y + self.dy).__dict__
+            self.buildingsDetected[(self.x + self.dx), (self.y + self.dy)] = type('obj', (object,), {'x': b.get('x'), 'y': b.get('y'), 'hasDelivery': b.get('delivery')})
+        elif self.isWall():
+            self.myWorldMap[(self.x + self.dx), (self.y + self.dy)] = 'w'
+        elif self.hasObstacle():
+            self.myWorldMap[(self.x + self.dx), (self.y + self.dy)] = 'o'
+        elif self.isHeadQuarters():
+            self.myWorldMap[(self.x + self.dx), (self.y + self.dy)] = 'h'
+        else:
+            self.myWorldMap[(self.x + self.dx), (self.y + self.dy)] = '.'
+
+        # print(self.myWorldMap.T)
     def aheadPosition(self):
         self.dx = 0
         self.dy = 0
@@ -178,7 +285,7 @@ class BasicAgent(pygame.sprite.Sprite):
         self.prepared = not self.prepared
 
     def recharge(self):
-        self.battery = 100
+        self.battery = 50
         self.pause = not self.pause
         self.prepared = not self.prepared
         print("[{}] - Recharged.".format(self.name))
@@ -249,7 +356,7 @@ class BasicAgent(pygame.sprite.Sprite):
             return False
 
     def isLowBattery(self):
-        return self.battery <= 25
+        return self.battery <= 15
 
     def isAgentInFront(self):
         return world.World.cellHasAgent(world.World, (self.x + self.dx), (self.y + self.dy))
@@ -261,4 +368,3 @@ class BasicAgent(pygame.sprite.Sprite):
             return True
         else:
             return False
-
