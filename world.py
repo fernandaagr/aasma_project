@@ -72,6 +72,7 @@ class World:
         2)comment: 63, 64; 98 até 106 até 214; 240, 241; 295, 296, 311, 312;  248, 249
         3)main: comment 36 e 37
         """
+        
         cp1 = self.cells.__dict__.get('cp1')
         keys = cp1[0].__dict__
         cp1_x = keys.get('x')
@@ -79,13 +80,13 @@ class World:
         cp1_name = keys.get('name')
         World.company01 = CompanyAgent(cp1_x, cp1_y, cp1_name, 2, self.display_surface, 3)
 
+        
         cp2 = self.cells.__dict__.get('cp2')
         keys = cp2[0].__dict__
         cp2_x = keys.get('x')
         cp2_y = keys.get('y')
         cp2_name = keys.get('name')
         World.company02 = CompanyAgent(cp2_x, cp2_y, cp2_name, 2, self.display_surface, 2)
-
         self.drawGrid()
 
     # ----------------------------- #
@@ -110,21 +111,22 @@ class World:
         agent02cp01 = World.company01.__dict__.get('agents')[1]  # proactive
         agent01cp02 = World.company02.__dict__.get('agents')[0]
         agent02cp02 = World.company02.__dict__.get('agents')[1]
+        
         if rands[0] <= 0.8:
            agent01cp01.agentDecision()
         elif not agent01cp01.pause:
             agent01cp01.rotate()
-
+        
         if rands[1] <= 0.8:
             agent02cp01.agentDecision()
         elif not agent02cp01.pause:
             agent02cp01.rotate()
-
+        
         if rands[2] <= 0.8:
            agent01cp02.agentDecision()
         elif not agent01cp02.pause:
             agent01cp02.rotate()
-
+        
         if rands[3] <= 0.8:
            agent02cp02.agentDecision()
         elif not agent02cp02.pause:
@@ -246,7 +248,7 @@ class World:
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('cp2'):
-            # print(elem.__dict__)
+            #print(elem.__dict__)
             self.all_sprites.add(elem)
 
         for elem in self.cells.__dict__.get('obstacles'):

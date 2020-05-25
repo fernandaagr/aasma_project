@@ -34,7 +34,7 @@ def main():
             myWorld.paused = True
     # get time of deliveries ------> mudar para loop depois
     myWorld.getDeliveriesTime(myWorld.agent01cp01)
-    myWorld.getDeliveriesTime(myWorld.agent102cp01)
+    myWorld.getDeliveriesTime(myWorld.agent02cp01)
     myWorld.getDeliveriesTime(myWorld.agent01cp02)
     myWorld.getDeliveriesTime(myWorld.agent02cp02)
 

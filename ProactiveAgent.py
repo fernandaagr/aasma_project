@@ -56,7 +56,7 @@ class ProactiveAgent(pygame.sprite.Sprite):
     def agentDecision(self):
         self.aheadPosition()
         self.updateMyWorldMap()
-        if not self.agentHasDelivery():
+        if not self.isLowBattery():
             self.agentReactiveDecision()
         else:
             self.agentProActiveDecision()
@@ -70,11 +70,9 @@ class ProactiveAgent(pygame.sprite.Sprite):
 
     def agentProActiveDecision(self):
         # print("CHEGUEI!")
-        # print(self.movingTo)
-        # print(len(self.path))
         if self.movingTo and len(self.path) > 0:
             print("moving")
-            point = self.path.pop()
+            point = self.path.pop(0)
             x, y = point
 
             self.checkDirectionOfPoints(x, y)
@@ -82,9 +80,9 @@ class ProactiveAgent(pygame.sprite.Sprite):
             if not self.pause and not self.isWall() and not self.isBuilding() and not self.hasObstacle() and not self.isAgentInFront():
                 # check this because of unknown cells and to avoid objects
                 print("deve mover aqui")
-                # point = self.path.pop(0)
+                #point = self.path.pop(0)
                 print("move to: {}".format(point))
-                self.move(point)
+                self.moveToCoords(point)
             elif self.isBuilding() and self.isDeliveryPoint():
                 print("drop")
                 self.dropDelivery()
@@ -104,9 +102,10 @@ class ProactiveAgent(pygame.sprite.Sprite):
         elif self.unable:
             print("[{}] - Unable to continue.".format(self.name))
         elif self.isLowBattery() and not self.isHeadQuarters():
+            print("[{}] - Low battery.".format(self.name))
             self.stopAgent()
             # ask company what to do
-            path, dx, dy = world.World.askCompanyWhatToDo(world.World, self.myId)
+            path, dx, dy = world.World.askCompanyWhatToDo(world.World, self.myId, self.myCompany)
             self.actionToPerform(path, dx, dy)
             # self.path.pop()
             self.pause = False
@@ -117,16 +116,8 @@ class ProactiveAgent(pygame.sprite.Sprite):
     # ------------------------#
 
     def agentReactiveDecision(self):
-        self.aheadPosition()
-        if self.isLowBattery() and not self.isHeadQuarters():
-            print("[{}] - Low battery.".format(self.name))
-            self.stopAgent()
-            # ask company what to do
-            path, dx, dy = world.World.askCompanyWhatToDo(world.World, self.myId, self.myCompany)
-            self.actionToPerform(path, dx, dy)
-            # self.path.pop()
-            self.pause = False
-        elif self.isAgentInFront():
+    
+        if self.isAgentInFront():
             print("Stoped!Agent in front.")
             #  self.stopAgent()
             self.rotate180()
